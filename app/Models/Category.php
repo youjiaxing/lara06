@@ -11,13 +11,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property int             $id
  * @property string          $name
  * @property int             $parent_id
- * @property bool            $is_directory
+ * @property bool            $is_directory 商品只能归属于叶子节点类目
  * @property int             $level
- * @property string          $path      最顶级节点的 path 是 '-', 次级的是 '-1-' (假设该次级节点的父节点 id 是 1)
+ * @property string          $path         最顶级节点的 path 是 '-', 次级的是 '-1-' (假设该次级节点的父节点 id 是 1)
+ * @property Category        $parent
  *
- * @property-read int[]      $path_ids  所有祖先类目的 ID 只
- * @property-read Collection $ancestors 所有祖先类目
- * @property-read string     $full_name 以 - 为分隔的所有祖先类目名称以及当前类目的名称
+ * @property-read int[]      $path_ids     所有祖先类目的 ID 只
+ * @property-read Collection $ancestors    所有祖先类目
+ * @property-read string     $full_name    以 - 为分隔的所有祖先类目名称以及当前类目的名称
  */
 class Category extends Model
 {
@@ -42,9 +43,9 @@ class Category extends Model
         parent::creating(
             function (Category $category) {
                 if (!is_null($category->parent_id)) {
-                    $parent = $category->parent();
+                    $parent = $category->parent;
                     $category->level = $parent->level + 1;
-                    $category->path = $parent->path . self::PATH_DELIMITER . $parent->id . self::PATH_DELIMITER;
+                    $category->path = $parent->path . $parent->id . self::PATH_DELIMITER;
                 } else {
                     $category->level = 1;
                     $category->path = self::PATH_DELIMITER;
