@@ -28,4 +28,12 @@ class Product extends Model
         }
         return \Storage::disk('public')->url($this->attributes['image']);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
 }
