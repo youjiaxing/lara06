@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
@@ -25,9 +26,9 @@ class ProductsController extends AdminController
     protected function grid()
     {
         $grid = new Grid(new Product);
-
         $grid->id('ID')->sortable();
         $grid->title('商品名称');
+        $grid->column('category.name', "类目");
         $grid->on_sale('已上架')->display(function ($value) {
             return $value ? '是' : '否';
         });
@@ -35,6 +36,8 @@ class ProductsController extends AdminController
         $grid->rating('评分');
         $grid->sold_count('销量');
         $grid->review_count('评论数');
+
+
 
         $grid->actions(function ($actions) {
             $actions->disableView();
@@ -64,6 +67,10 @@ class ProductsController extends AdminController
 
         // 创建一个选择图片的框
         $form->image('image', '封面图片')->rules('required|image');
+
+        // 创建一个单选框
+        $form->select('category_id', "商品类目")
+            ->options(Category::leafs()->pluck('name', 'id'));
 
         // 创建一个富文本编辑器
         $form->quill('description', '商品描述')->rules('required');

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,6 +20,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int[]      $path_ids     所有祖先类目的 ID 只
  * @property-read Collection $ancestors    所有祖先类目
  * @property-read string     $full_name    以 - 为分隔的所有祖先类目名称以及当前类目的名称
+ *
+ * @method Builder leafs() 获取所有非目录分类
+ * @method Builder directories() 获取所有目录分类
  */
 class Category extends Model
 {
@@ -112,5 +116,25 @@ class Category extends Model
     public function getFullNameAttribute()
     {
         return $this->ancestors->push($this)->pluck('name')->implode(' - ');
+    }
+
+    /**
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeLeafs(Builder $query)
+    {
+        return $query->where('is_directory', 0);
+    }
+
+    /**
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeDirectories(Builder $query)
+    {
+        return $query->where('is_directory', 1);
     }
 }

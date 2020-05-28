@@ -96,7 +96,8 @@ class CategoriesController extends AdminController
         } else {
             $parentIdField = $form->select('parent_id', '父类目');
             // $parentIdField->ajax('/admin/api/categories');
-            $parentIdField->options(Category::query()->where('is_directory', 1)->pluck('name', 'id'));
+            // $parentIdField->options(Category::query()->where('is_directory', 1)->pluck('name', 'id'));
+            $parentIdField->options(Category::directories()->pluck('name', 'id'));
         }
 
         $form->saving(
@@ -111,8 +112,7 @@ class CategoriesController extends AdminController
     public function apiIndex(Request $request)
     {
         $query = $request->get('q');
-        return Category::query()
-            ->where('is_directory', 1)
+        return Category::directories()
             ->where('name', 'like', "%{$query}%")
             ->paginate(null, ['id', 'name as text']);
     }
