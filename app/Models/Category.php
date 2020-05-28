@@ -42,16 +42,21 @@ class Category extends Model
         // 方便在创建时不指定 level 和 path
         parent::creating(
             function (Category $category) {
-                if (!is_null($category->parent_id)) {
-                    $parent = $category->parent;
-                    $category->level = $parent->level + 1;
-                    $category->path = $parent->path . $parent->id . self::PATH_DELIMITER;
-                } else {
-                    $category->level = 1;
-                    $category->path = self::PATH_DELIMITER;
-                }
+                $category->updateByParent();
             }
         );
+    }
+
+    public function updateByParent()
+    {
+        if (!is_null($this->parent_id) && $parent = $this->parent) {
+            $this->level = $parent->level + 1;
+            $this->path = $parent->path . $parent->id . self::PATH_DELIMITER;
+        } else {
+            $this->parent_id = null;
+            $this->level = 0;
+            $this->path = self::PATH_DELIMITER;
+        }
     }
 
     /**

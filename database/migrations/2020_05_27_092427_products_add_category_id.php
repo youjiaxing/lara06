@@ -14,7 +14,9 @@ class ProductsAddCategoryId extends Migration
     public function up()
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->unsignedInteger('category_id')->nullable()->after('id')->comment("商品类目");
+            $table->unsignedBigInteger('category_id')->nullable()->after('id')->comment("商品类目");
+
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');
         });
     }
 
@@ -26,6 +28,7 @@ class ProductsAddCategoryId extends Migration
     public function down()
     {
         Schema::table('products', function (Blueprint $table) {
+            $table->dropForeign(['category_id']);
             $table->dropColumn('category_id');
         });
     }
