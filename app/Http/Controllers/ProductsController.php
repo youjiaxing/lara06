@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
+use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -13,19 +14,42 @@ class ProductsController extends Controller
     {
         // 创建一个查询构造器
         $builder = Product::query()->where('on_sale', true);
+
         // 判断是否有提交 search 参数，如果有就赋值给 $search 变量
         // search 参数用来模糊搜索商品
         if ($search = $request->input('search', '')) {
-            $like = '%'.$search.'%';
+            $like = '%' . $search . '%';
             // 模糊搜索商品标题、商品详情、SKU 标题、SKU描述
-            $builder->where(function ($query) use ($like) {
-                $query->where('title', 'like', $like)
-                    ->orWhere('description', 'like', $like)
-                    ->orWhereHas('skus', function ($query) use ($like) {
-                        $query->where('title', 'like', $like)
-                            ->orWhere('description', 'like', $like);
-                    });
-            });
+            $builder->where(
+                function ($query) use ($like) {
+                    $query->where('title', 'like', $like)
+                        ->orWhere('description', 'like', $like)
+                        ->orWhereHas(
+                            'skus',
+                            function ($query) use ($like) {
+                                $query->where('title', 'like', $like)
+                                    ->orWhere('description', 'like', $like);
+                            }
+                        );
+                }
+            );
+        }
+
+        // 判断分类
+        $categoryId = (int)$request->input('category_id');
+        if ($categoryId && $category = Category::query()->find($categoryId)) {
+            /* @var Category $category */
+            if ($category->is_directory) {
+                $builder->whereIn(
+                    'category_id',
+                    Category::query()->where('path', 'like', $category->path . $category->id . Category::PATH_DELIMITER)->select('id')
+                );
+                // $builder->whereHas('category', function (Builder $builder) use ($category) {
+                //     $builder->where('path', 'like', $category->path . $category->id . Category::PATH_DELIMITER);
+                // });
+            } else {
+                $builder->where('category_id', $category->id);
+            }
         }
 
         // 是否有提交 order 参数，如果有就赋值给 $order 变量
@@ -43,13 +67,18 @@ class ProductsController extends Controller
 
         $products = $builder->paginate(16);
 
-        return view('products.index', [
-            'products' => $products,
-            'filters'  => [
-                'search' => $search,
-                'order'  => $order,
-            ],
-        ]);
+        return view(
+            'products.index',
+            [
+                'products' => $products,
+                'category' => $category ?? null,
+                'filters' => [
+                    'search' => $search,
+                    'order' => $order,
+                    'category' => $categoryId,
+                ],
+            ]
+        );
     }
 
     public function show(Product $product, Request $request)
@@ -61,7 +90,7 @@ class ProductsController extends Controller
 
         $favored = false;
         // 用户未登录时返回的是 null，已登录时返回的是对应的用户对象
-        if($user = $request->user()) {
+        if ($user = $request->user()) {
             // 从当前用户已收藏的商品中搜索 id 为当前商品 id 的商品
             // boolval() 函数用于把值转为布尔值
             $favored = boolval($user->favoriteProducts()->find($product->id));
@@ -76,11 +105,14 @@ class ProductsController extends Controller
             ->get();
 
         // 最后别忘了注入到模板中
-        return view('products.show', [
-            'product' => $product,
-            'favored' => $favored,
-            'reviews' => $reviews
-        ]);
+        return view(
+            'products.show',
+            [
+                'product' => $product,
+                'favored' => $favored,
+                'reviews' => $reviews
+            ]
+        );
     }
 
     public function favorites(Request $request)
