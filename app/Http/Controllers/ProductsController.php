@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
+use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class ProductsController extends Controller
 {
@@ -13,6 +16,7 @@ class ProductsController extends Controller
     {
         // 创建一个查询构造器
         $builder = Product::query()->where('on_sale', true);
+
         // 判断是否有提交 search 参数，如果有就赋值给 $search 变量
         // search 参数用来模糊搜索商品
         if ($search = $request->input('search', '')) {
@@ -26,6 +30,20 @@ class ProductsController extends Controller
                             ->orWhere('description', 'like', $like);
                     });
             });
+        }
+
+        // 判断分类
+        $categoryId = (int)$request->input('category_id');
+        if ($categoryId && $category = Category::query()->find($categoryId)) {
+            /* @var Category $category */
+            if ($category->is_directory) {
+                $builder->whereIn('category_id', Category::query()->where('path', 'like', $category->path . $category->id . Category::PATH_DELIMITER)->select('id'));
+                // $builder->whereHas('category', function (Builder $builder) use ($category) {
+                //     $builder->where('path', 'like', $category->path . $category->id . Category::PATH_DELIMITER);
+                // });
+            } else {
+                $builder->where('category_id', $category->id);
+            }
         }
 
         // 是否有提交 order 参数，如果有就赋值给 $order 变量
@@ -45,9 +63,11 @@ class ProductsController extends Controller
 
         return view('products.index', [
             'products' => $products,
+            'category' => $category ?? null,
             'filters'  => [
                 'search' => $search,
                 'order'  => $order,
+                'category' => $categoryId,
             ],
         ]);
     }
