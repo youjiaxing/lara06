@@ -87,4 +87,14 @@ class Product extends Model
     {
         return $this->hasOne(CrowdfundingProduct::class, 'product_id');
     }
+
+    public function isNormalProduct()
+    {
+        return $this->type === self::TYPE_NORMAL;
+    }
+
+    public function isCrowdfundProduct()
+    {
+        return $this->type === self::TYPE_CROWDFUNDING;
+    }
 }
