@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\CouponCodeUnavailableException;
 use App\Models\CouponCode;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\Order;
@@ -16,6 +17,18 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
+    /**
+     * 普通商品下单(从购物车)
+     *
+     * @param User            $user
+     * @param UserAddress     $address
+     * @param                 $remark
+     * @param                 $items
+     * @param CouponCode|null $coupon
+     *
+     * @return mixed
+     * @throws CouponCodeUnavailableException
+     */
     public function store(User $user, UserAddress $address, $remark, $items, CouponCode $coupon = null)
     {
         // 如果传入了优惠券，则先检查是否可用
@@ -31,7 +44,8 @@ class OrderService
                 // 创建一个订单
                 $order = new Order(
                     [
-                        'address' => $this->extractAddress(),
+                        'type' => Order::TYPE_NORMAL,
+                        'address' => $this->extractAddress($address),
                         'remark' => $remark,
                         'total_amount' => 0,
                     ]
@@ -111,6 +125,7 @@ class OrderService
                 // 创建父订单
                 $order = new Order(
                     [
+                        'type' => Order::TYPE_CROWDFUNDING,
                         'address' => $this->extractAddress($userAddress),
                         'total_amount' => $sku->price * $amount,
                         'remark' => $remark,
@@ -141,7 +156,7 @@ class OrderService
         );
 
         // 定时关闭订单
-        $closeDelay = min(config('app.order_ttl'), $sku->product->crowdfund->end_at->getTimestamp() - time());
+        $closeDelay = min(config('app.order_ttl'), $sku->product->crowdfunding->end_at->getTimestamp() - time());
         dispatch(new CloseOrder($order, $closeDelay));
 
         return $order;

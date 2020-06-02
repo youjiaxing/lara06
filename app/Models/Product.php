@@ -26,7 +26,7 @@ use Illuminate\Support\Str;
  * @property-read ProductSku[]             $skus
  * @property-read string                   $image_url
  * @property-read Category|null            $category
- * @property-read CrowdfundingProduct|null $crowdfund
+ * @property-read CrowdfundingProduct|null $crowdfunding
  */
 class Product extends Model
 {

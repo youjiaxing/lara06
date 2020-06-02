@@ -18,7 +18,7 @@
 
 							@if ($product->isCrowdfundProduct())
 								@php
-									$crowdfund = $product->crowdfund
+									$crowdfund = $product->crowdfunding
 								@endphp
 
 								{{--众筹商品信息开始--}}
