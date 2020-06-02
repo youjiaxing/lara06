@@ -37,7 +37,7 @@ class CrowdfundingProduct extends Model
         'target_amount',
         'user_count',
         'end_at',
-        'stauts',
+        'status',
     ];
 
     protected $appends = [

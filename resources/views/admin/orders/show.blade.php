@@ -92,10 +92,11 @@ ship
 				</tr>
 			@endif
 			<!-- 订单发货结束 -->
+
 			@if($order->refund_status !== \App\Models\Order::REFUND_STATUS_PENDING)
 				<tr>
 					<td>退款状态：</td>
-					<td colspan="2">{{ \App\Models\Order::$refundStatusMap[$order->refund_status] }}，理由：{{ $order->extra['refund_reason'] }}</td>
+					<td colspan="2">{{ \App\Models\Order::$refundStatusMap[$order->refund_status] }}，理由：{{ $order->extra['refund_reason'] ?? "" }}</td>
 					<td>
 						<!-- 如果订单退款状态是已申请，则展示处理按钮 -->
 						@if($order->refund_status === \App\Models\Order::REFUND_STATUS_APPLIED)

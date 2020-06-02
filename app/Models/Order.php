@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Ramsey\Uuid\Uuid;
 
@@ -9,8 +10,12 @@ use Ramsey\Uuid\Uuid;
  * Class Order
  * @package App\Models
  *
- * @property string $type
- * @property string $type_str 订单商品类型
+ * @property string    $type
+ * @property string    $type_str 订单商品类型
+ * @property Carbon    $paid_at
+ * @property string    $refund_status
+ *
+ * @property-read User $user
  */
 class Order extends Model
 {
