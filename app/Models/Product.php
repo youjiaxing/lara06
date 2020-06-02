@@ -83,7 +83,7 @@ class Product extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
-    public function crowdfund()
+    public function crowdfunding()
     {
         return $this->hasOne(CrowdfundingProduct::class, 'product_id');
     }

@@ -54,26 +54,42 @@ class UpdateCrowdfundingProductProgress implements ShouldQueue
 
         // 当前金额更新
         // 参与人数更新
-        $data = OrderItem::query()->where('product_id', $crowdfundingProduct->product_id)
-            ->whereHas(
-                'order',
-                function (Builder $builder) {
-                    $builder->whereNotNull('paid_at');
-                }
-            )->first(
+        // $data = OrderItem::query()->where('product_id', $crowdfundingProduct->product_id)
+        //     ->whereHas(
+        //         'order',
+        //         function (Builder $builder) {
+        //             $builder->whereNotNull('paid_at');
+        //         }
+        //     )->first(
+        //         [
+        //             DB::raw('sum(amount * price) as total_amount'),
+        //             DB::raw('count(distinct(user_id)) as user_count')
+        //         ]
+        //     );
+        $data = DB::table('order_items')->where('product_id', $crowdfundingProduct->product_id)
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereNotNull('orders.paid_at')
+            ->first(
                 [
-                    DB::raw('sum(amount * price) as total_amount'),
-                    DB::raw('count(distinct(user_id)) as user_count')
+                    DB::raw('sum(orders.total_amount) as total_amount'),
+                    DB::raw('count(distinct(`user_id`)) as user_count')
                 ]
             );
 
         $crowdfundingProduct->update(
             [
-                'target_amount' => $data['total_amount'],
-                'user_count' => $data['user_count'],
+                'total_amount' => $data->total_amount,
+                'user_count' => $data->user_count,
             ]
         );
 
-        Log::info(sprintf("众筹商品更新数据. 当前已筹集金额: %.2f, 总参与人数: %d, 总进度: %.2f%%", $crowdfundingProduct->target_amount, $crowdfundingProduct->user_count, $crowdfundingProduct->percent));
+        Log::info(
+            sprintf(
+                "众筹商品更新数据. 当前已筹集金额: %.2f, 总参与人数: %d, 总进度: %.2f%%",
+                $crowdfundingProduct->target_amount,
+                $crowdfundingProduct->user_count,
+                $crowdfundingProduct->percent
+            )
+        );
     }
 }

@@ -230,5 +230,9 @@ return [
 
     ],
 
+    // 订单未付款超时时间
     'order_ttl' => 1800,
+
+    // Ngrok 分配的地址
+    'ngrok_url' => env('NGROK_URL'),
 ];
