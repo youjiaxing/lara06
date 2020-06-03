@@ -38,5 +38,7 @@ Route::group([
     $router->put('categories/{id}', 'CategoriesController@update')->name('admin.categories.update');
     $router->delete('categories/{id}', 'CategoriesController@destroy')->name('admin.categories.destroy');
 
+    $router->resource('crowdfund_products', 'CrowdfundingProductsController');
+
     $router->get('api/categories', 'CategoriesController@apiIndex');
 });

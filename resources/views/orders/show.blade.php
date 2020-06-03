@@ -57,6 +57,7 @@
                                     <div class="line-value">{{ $order->ship_data['express_company'] }} {{ $order->ship_data['express_no'] }}</div>
                                 </div>
                             @endif
+
                             <!-- 订单已支付，且退款状态不是未退款时展示退款信息 -->
                             @if($order->paid_at && $order->refund_status !== \App\Models\Order::REFUND_STATUS_PENDING)
                                 <div class="line">
@@ -119,8 +120,10 @@
                                     <button type="button" id="btn-receive" class="btn btn-sm btn-success">确认收货</button>
                                 </div>
                             @endif
+
                             <!-- 订单已支付，且退款状态是未退款时展示申请退款按钮 -->
-                            @if($order->paid_at && $order->refund_status === \App\Models\Order::REFUND_STATUS_PENDING)
+                            <!-- 众筹商品不支持用户主动申请退款 -->
+                            @if(!$order->isCrowdfundingOrder() && $order->paid_at && $order->refund_status === \App\Models\Order::REFUND_STATUS_PENDING)
                                 <div class="refund-button">
                                     <button class="btn btn-sm btn-danger" id="btn-apply-refund">申请退款</button>
                                 </div>

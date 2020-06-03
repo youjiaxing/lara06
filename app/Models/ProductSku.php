@@ -5,6 +5,17 @@ namespace App\Models;
 use App\Exceptions\InternalException;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Class ProductSku
+ * @package App\Models
+ *
+ * @property int          $stock
+ * @property float        price
+ * @property string       $title
+ * @property string       $description
+ *
+ * @property-read Product $product
+ */
 class ProductSku extends Model
 {
     protected $fillable = ['title', 'description', 'price', 'stock'];

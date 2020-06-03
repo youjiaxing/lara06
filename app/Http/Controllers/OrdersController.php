@@ -6,9 +6,11 @@ use App\Events\OrderReviewed;
 use App\Exceptions\CouponCodeUnavailableException;
 use App\Exceptions\InvalidRequestException;
 use App\Http\Requests\ApplyRefundRequest;
+use App\Http\Requests\CrowdfundingOrderRequest;
 use App\Http\Requests\OrderRequest;
 use App\Http\Requests\SendReviewRequest;
 use App\Models\CouponCode;
+use App\Models\ProductSku;
 use App\Models\UserAddress;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -29,6 +31,15 @@ class OrdersController extends Controller
         return view('orders.index', ['orders' => $orders]);
     }
 
+    /**
+     * 普通商品下单提交逻辑 - 从购物车读取商品信息
+     *
+     * @param OrderRequest $request
+     * @param OrderService $orderService
+     *
+     * @return mixed
+     * @throws CouponCodeUnavailableException
+     */
     public function store(OrderRequest $request, OrderService $orderService)
     {
         $user    = $request->user();
@@ -46,12 +57,42 @@ class OrdersController extends Controller
         return $orderService->store($user, $address, $request->input('remark'), $request->input('items'), $coupon);
     }
 
+    /**
+     * 众筹商品下单逻辑
+     *
+     * @param CrowdfundingOrderRequest $request
+     * @param OrderService             $orderService
+     *
+     * @return mixed
+     * @throws \Throwable
+     */
+    public function crowdfundStore(CrowdfundingOrderRequest $request, OrderService $orderService)
+    {
+        $user = $request->user();
+        $userAddress = UserAddress::query()->findOrFail($request->input('address_id'));
+        $remark = $request->input('remark', '');
+        $sku = ProductSku::query()->findOrFail($request->input('sku_id'));
+        $amount = $request->input('amount');
+
+        return $orderService->crowdfundingStore($user, $userAddress, $remark, $sku, $amount);
+    }
+
     public function show(Order $order, Request $request)
     {
         $this->authorize('own', $order);
         return view('orders.show', ['order' => $order->load(['items.productSku', 'items.product'])]);
     }
 
+    /**
+     * 确认收货操作
+     *
+     * @param Order   $order
+     * @param Request $request
+     *
+     * @return Order
+     * @throws InvalidRequestException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function received(Order $order, Request $request)
     {
         // 校验权限
@@ -125,6 +166,11 @@ class OrdersController extends Controller
         if ($order->refund_status !== Order::REFUND_STATUS_PENDING) {
             throw new InvalidRequestException('该订单已经申请过退款，请勿重复申请');
         }
+        // 众筹订单不支持用户主动退款
+        if ($order->isCrowdfundingOrder()) {
+            throw new InvalidRequestException('众筹订单不支持用户主动申请退款');
+        }
+
         // 将用户输入的退款理由放到订单的 extra 字段中
         $extra                  = $order->extra ?: [];
         $extra['refund_reason'] = $request->input('reason');

@@ -39,6 +39,9 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
     Route::post('orders/{order}/review', 'OrdersController@sendReview')->name('orders.review.store');
     Route::post('orders/{order}/apply_refund', 'OrdersController@applyRefund')->name('orders.apply_refund');
 
+    // 众筹下单
+    Route::post('crowdfunding_orders', 'OrdersController@crowdfundStore')->name('crowdfunding_orders.store');
+
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');
     Route::get('payment/alipay/return', 'PaymentController@alipayReturn')->name('payment.alipay.return');
     Route::get('payment/{order}/wechat', 'PaymentController@payByWechat')->name('payment.wechat');

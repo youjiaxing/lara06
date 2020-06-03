@@ -10,9 +10,18 @@ class UserAddressesController extends Controller
 {
     public function index(Request $request)
     {
-        return view('user_addresses.index', [
-            'addresses' => $request->user()->addresses,
-        ]);
+        $addresses = $request->user()->addresses;
+
+        if ($request->expectsJson()) {
+            return $addresses;
+        } else {
+            return view(
+                'user_addresses.index',
+                [
+                    'addresses' => $addresses,
+                ]
+            );
+        }
     }
 
     public function create()
@@ -22,15 +31,19 @@ class UserAddressesController extends Controller
 
     public function store(UserAddressRequest $request)
     {
-        $request->user()->addresses()->create($request->only([
-            'province',
-            'city',
-            'district',
-            'address',
-            'zip',
-            'contact_name',
-            'contact_phone',
-        ]));
+        $request->user()->addresses()->create(
+            $request->only(
+                [
+                    'province',
+                    'city',
+                    'district',
+                    'address',
+                    'zip',
+                    'contact_name',
+                    'contact_phone',
+                ]
+            )
+        );
 
         return redirect()->route('user_addresses.index');
     }
@@ -45,15 +58,19 @@ class UserAddressesController extends Controller
     public function update(UserAddress $user_address, UserAddressRequest $request)
     {
         $this->authorize('own', $user_address);
-        $user_address->update($request->only([
-            'province',
-            'city',
-            'district',
-            'address',
-            'zip',
-            'contact_name',
-            'contact_phone',
-        ]));
+        $user_address->update(
+            $request->only(
+                [
+                    'province',
+                    'city',
+                    'district',
+                    'address',
+                    'zip',
+                    'contact_name',
+                    'contact_phone',
+                ]
+            )
+        );
 
         return redirect()->route('user_addresses.index');
     }

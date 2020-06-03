@@ -15,6 +15,9 @@ class OrderPaid
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    /**
+     * @var Order $order
+     */
     protected $order;
 
     public function __construct(Order $order)
@@ -22,6 +25,9 @@ class OrderPaid
         $this->order = $order;
     }
 
+    /**
+     * @return Order
+     */
     public function getOrder()
     {
         return $this->order;

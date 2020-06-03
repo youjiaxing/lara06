@@ -25,6 +25,7 @@ class UpdateProductSoldCount implements ShouldQueue
                 ->whereHas('order', function ($query) {
                     $query->whereNotNull('paid_at');  // 关联的订单状态是已支付
                 })->sum('amount');
+
             // 更新商品销量
             $product->update([
                 'sold_count' => $soldCount,

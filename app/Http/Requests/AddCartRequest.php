@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Product;
 use App\Models\ProductSku;
 
 class AddCartRequest extends Request
@@ -12,6 +13,7 @@ class AddCartRequest extends Request
             'sku_id' => [
                 'required',
                 function ($attribute, $value, $fail) {
+                    /* @var ProductSku $sku */
                     if (!$sku = ProductSku::find($value)) {
                         return $fail('该商品不存在');
                     }
@@ -23,6 +25,9 @@ class AddCartRequest extends Request
                     }
                     if ($this->input('amount') > 0 && $sku->stock < $this->input('amount')) {
                         return $fail('该商品库存不足');
+                    }
+                    if ($sku->product->type != Product::TYPE_NORMAL) {
+                        return $fail('众筹/秒杀等商品不能添加到购物车');
                     }
                 },
             ],

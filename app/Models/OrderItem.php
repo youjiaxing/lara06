@@ -4,6 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Class OrderItem
+ * @package App\Models
+ *
+ * @property-read Product    $product
+ * @property-read ProductSku $productSku
+ * @property-read Order      $order
+ */
 class OrderItem extends Model
 {
     protected $fillable = ['amount', 'price', 'rating', 'review', 'reviewed_at'];
