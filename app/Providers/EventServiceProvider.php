@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\InstallmentPaidEvent;
 use App\Events\OrderPaid;
 use App\Events\OrderReviewed;
+use App\Listeners\SendInstallmentItemPaidMail;
 use App\Listeners\SendOrderPaidMail;
 use App\Listeners\UpdateCrowdfundingProductProgress;
 use App\Listeners\UpdateProductRating;
@@ -31,6 +33,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderReviewed::class => [
             UpdateProductRating::class,
+        ],
+        InstallmentPaidEvent::class => [
+            SendInstallmentItemPaidMail::class,
         ],
     ];
 

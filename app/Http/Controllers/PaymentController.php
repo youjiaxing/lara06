@@ -62,7 +62,7 @@ class PaymentController extends Controller
 
         $order->update([
             'paid_at'        => Carbon::now(), // 支付时间
-            'payment_method' => 'alipay', // 支付方式
+            'payment_method' => Order::PAYMENT_METHOD_ALIPAY, // 支付方式
             'payment_no'     => $data->trade_no, // 支付宝订单号
         ]);
         $this->afterPaid($order);
@@ -109,7 +109,7 @@ class PaymentController extends Controller
         // 将订单标记为已支付
         $order->update([
             'paid_at'        => Carbon::now(),
-            'payment_method' => 'wechat',
+            'payment_method' => Order::PAYMENT_METHOD_WECHAT,
             'payment_no'     => $data->transaction_id,
         ]);
         $this->afterPaid($order);

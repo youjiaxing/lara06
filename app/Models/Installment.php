@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\InternalException;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -11,19 +12,20 @@ use Illuminate\Database\Eloquent\Model;
  * Class Installments
  * @package App\Models
  *
- * @property string                 $no           分期流水号
- * @property int                    $order_id
- * @property int                    $user_id
- * @property float                  $base_amount  订单原始金额
- * @property int                    $count
- * @property float                  $fee_rate     分期费率
- * @property float                  $fine_rate    逾期费率
- * @property string                 $status       分期状态
+ * @property int                               $id
+ * @property string                            $no           分期流水号
+ * @property int                               $order_id
+ * @property int                               $user_id
+ * @property float                             $base_amount  订单原始金额
+ * @property int                               $count        分期数
+ * @property float                             $fee_rate     分期费率
+ * @property float                             $fine_rate    逾期费率
+ * @property string                            $status       分期状态
  *
- * @property-read string            $status_str   分期状态说明
- * @property-read User              $user
- * @property-read Order             $order
- * @property-read InstallmentItem[] $items
+ * @property-read string                       $status_str   分期状态说明
+ * @property-read User                         $user
+ * @property-read Order                        $order
+ * @property-read InstallmentItem[]|Collection $items
  */
 class Installment extends Model
 {
@@ -63,19 +65,14 @@ class Installment extends Model
     public static function generateNo()
     {
         for ($i = 0; $i < 10; $i++) {
-            $noPrefix = date('ymdhis');
-            $no = $noPrefix . str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $noPrefix = date('YmdHis');
+            $no = $noPrefix . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             if (!static::query()->where('no', $no)->exists()) {
                 return $no;
             }
         }
 
         throw new InternalException("无法生成唯一分期流水号");
-    }
-
-    protected function getStatusStrAttribute()
-    {
-        return static::$statusMap[$this->attributes['status']];
     }
 
     public function user()
@@ -91,5 +88,10 @@ class Installment extends Model
     public function items()
     {
         return $this->hasMany(InstallmentItem::class, 'installment_id', 'id');
+    }
+
+    protected function getStatusStrAttribute()
+    {
+        return static::$statusMap[$this->attributes['status']];
     }
 }

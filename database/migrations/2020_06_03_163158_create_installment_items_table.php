@@ -24,7 +24,7 @@ class CreateInstallmentItemsTable extends Migration
             $table->dateTime('paid_at')->nullable()->comment('实际支付日期');
             $table->string('payment_method')->nullable()->comment('支付平台');
             $table->string('payment_no')->nullable()->comment('支付平台订单号');
-            $table->string('refund_status')->comment("退款状态");
+            $table->string('refund_status')->comment("退款状态")->default(\App\Models\InstallmentItem::REFUND_STATUS_PENDING);
 
             $table->timestamps();
 

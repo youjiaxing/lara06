@@ -10,12 +10,27 @@ use Ramsey\Uuid\Uuid;
  * Class Order
  * @package App\Models
  *
- * @property string    $type
- * @property string    $type_str 订单商品类型
- * @property Carbon    $paid_at
- * @property string    $refund_status
+ * @property string           $no            订单流水号
+ * @property array            $address       收货地址数组
+ * @property string           $type          订单类型: 普通订单、众筹订单、秒杀订单
+ * @property string           $type_str      订单商品类型
+ * @property Carbon           $paid_at       支付时间(用于判断是否已支付)
+ * @property bool             $closed        订单是否已关闭
+ * @property float            $total_amount
+ * @property string           $remark        下单备注
+ * @property string           $payment_method
+ * @property string           $payment_no
+ * @property string           $refund_status 退款状态
+ * @property string           $refund_no     退款编号
+ * @property boolean          $reviewed      是否已评价
+ * @property string           $ship_status
+ * @property string           $ship_data
+ * @property array            $extra
  *
- * @property-read User $user
+ *
+ * @property-read User        $user
+ * @property-read Installment $installment
+ * @property-read string      $payment_method_str
  */
 class Order extends Model
 {
@@ -31,6 +46,10 @@ class Order extends Model
 
     const TYPE_NORMAL = 'normal';
     const TYPE_CROWDFUNDING = 'crowdfunding';
+
+    const PAYMENT_METHOD_ALIPAY = 'alipay';
+    const PAYMENT_METHOD_WECHAT = 'wechat';
+    const PAYMENT_METHOD_INSTALLMENT = 'installment';
 
     public static $refundStatusMap = [
         self::REFUND_STATUS_PENDING => '未退款',
@@ -49,6 +68,13 @@ class Order extends Model
     private static $typeMap = [
         self::TYPE_NORMAL => '普通商品订单',
         self::TYPE_CROWDFUNDING => '众筹商品订单',
+    ];
+
+    private static $paymentMethodStr = [
+        self::PAYMENT_METHOD_ALIPAY => '支付宝',
+        self::PAYMENT_METHOD_WECHAT => '微信',
+        self::PAYMENT_METHOD_INSTALLMENT => '分期付款',
+        null => '未支付',
     ];
 
     protected $fillable = [
@@ -81,6 +107,17 @@ class Order extends Model
         'paid_at',
     ];
 
+    public static function getAvailableRefundNo()
+    {
+        do {
+            // Uuid类可以用来生成大概率不重复的字符串
+            $no = Uuid::uuid4()->getHex();
+            // 为了避免重复我们在生成之后在数据库中查询看看是否已经存在相同的退款订单号
+        } while (self::query()->where('refund_no', $no)->exists());
+
+        return $no;
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -100,21 +137,6 @@ class Order extends Model
         );
     }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function items()
-    {
-        return $this->hasMany(OrderItem::class);
-    }
-
-    public function couponCode()
-    {
-        return $this->belongsTo(CouponCode::class);
-    }
-
     public static function findAvailableNo()
     {
         // 订单流水号前缀
@@ -132,20 +154,19 @@ class Order extends Model
         return false;
     }
 
-    public static function getAvailableRefundNo()
+    public function user()
     {
-        do {
-            // Uuid类可以用来生成大概率不重复的字符串
-            $no = Uuid::uuid4()->getHex();
-            // 为了避免重复我们在生成之后在数据库中查询看看是否已经存在相同的退款订单号
-        } while (self::query()->where('refund_no', $no)->exists());
-
-        return $no;
+        return $this->belongsTo(User::class);
     }
 
-    public function getTypeStrAttribute()
+    public function items()
     {
-        return static::$typeMap[$this->attributes['type']];
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function couponCode()
+    {
+        return $this->belongsTo(CouponCode::class);
     }
 
     public function isNormalOrder()
@@ -156,5 +177,20 @@ class Order extends Model
     public function isCrowdfundingOrder()
     {
         return $this->type === self::TYPE_CROWDFUNDING;
+    }
+
+    public function installment()
+    {
+        return $this->hasOne(Installment::class, 'order_id', 'id');
+    }
+
+    protected function getTypeStrAttribute()
+    {
+        return static::$typeMap[$this->attributes['type']];
+    }
+
+    protected function getPaymentMethodStrAttribute()
+    {
+        return static::$paymentMethodStr[$this->attributes['payment_method']];
     }
 }

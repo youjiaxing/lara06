@@ -231,8 +231,22 @@ return [
     ],
 
     // 订单未付款超时时间
-    'order_ttl' => 1800,
+    // 'order_ttl' => 1800,
+    'order_ttl' => 18000,
 
     // Ngrok 分配的地址
     'ngrok_url' => env('NGROK_URL'),
+
+    // 分期手续费, key 是分期数, value 是百分比费率
+    'installment_fee_rate' => [
+        3 => 1.5,
+        6 => 2,
+        12 => 2.5,
+    ],
+
+    // 分期滞纳金, 逾期日息 0.05%
+    'installment_fine_rate' => 0.05,
+
+    // 最低分期金额
+    'installment_min_amount' => 300,
 ];
