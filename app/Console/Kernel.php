@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\Cron\FinishCrowdfundingCommand;
+use App\Console\Commands\Cron\UpdateInstallmentFineCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -40,6 +41,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->runInBackground()
             ->withoutOverlapping(10);
+
+        $schedule->command(UpdateInstallmentFineCommand::class)
+            ->daily()
+            ->runInBackground();
     }
 
     /**

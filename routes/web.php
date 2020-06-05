@@ -42,15 +42,38 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
     // 众筹下单
     Route::post('crowdfunding_orders', 'OrdersController@crowdfundStore')->name('crowdfunding_orders.store');
 
+    // 订单支付 - 支付宝
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');
+    // 订单支付 - 支付宝的同步回调
     Route::get('payment/alipay/return', 'PaymentController@alipayReturn')->name('payment.alipay.return');
+    // 订单支付 - 微信
     Route::get('payment/{order}/wechat', 'PaymentController@payByWechat')->name('payment.wechat');
 
     Route::get('coupon_codes/{code}', 'CouponCodesController@show')->name('coupon_codes.show');
+
+    // 为订单创建分期信息
+    Route::get('installments/query_fee', 'InstallmentsController@queryFee')->name('installments.query_fee');
+    // 分期付款 - 支付宝
+    Route::get('installments/{installment}/{item}/alipay', 'InstallmentsController@payByAlipay')->name('installments.alipay');
+    // 分期付款 - 支付宝 - 同步回调
+    Route::get('installments/alipay/return', 'InstallmentsController@alipayReturn')->name('installments.alipay_return');
+    // 创建分期订单
+    Route::post('installments', 'InstallmentsController@store')->name('installments.store');
+    Route::get('installments', 'InstallmentsController@index')->name('installments.index');
+    Route::get('installments/{installment}', 'InstallmentsController@show')->name('installments.show');
 });
 
+// 订单支付 - 支付宝 - 异步回调
 Route::post('payment/alipay/notify', 'PaymentController@alipayNotify')->name('payment.alipay.notify');
+// 订单支付 - 微信 - 异步回调
 Route::post('payment/wechat/notify', 'PaymentController@wechatNotify')->name('payment.wechat.notify');
+// 订单退款 - 微信 - 异步回调
 Route::post('payment/wechat/refund_notify', 'PaymentController@wechatRefundNotify')->name('payment.wechat.refund_notify');
 
+// 分期付款 - 支付宝 - 异步回调
+Route::post('installments/alipay/notify', 'InstallmentsController@alipayNotify')->name('installments.alipay.notify');
+
+// 商品首页
 Route::get('products/{product}', 'ProductsController@show')->name('products.show');
+
+
