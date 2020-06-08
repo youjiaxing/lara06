@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
  * @property int                                 $category_id
  * @property string                              $type
  * @property string                              $title
+ * @property string                              $long_title 长标题
  * @property string                              $description
  * @property string                              $image
  * @property bool                                $on_sale
@@ -45,6 +46,7 @@ class Product extends Model
 
     protected $fillable = [
         'title',
+        'long_title',
         'description',
         'image',
         'on_sale',

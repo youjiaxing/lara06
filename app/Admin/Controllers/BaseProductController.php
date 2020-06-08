@@ -68,6 +68,8 @@ abstract class BaseProductController extends AdminController
         // 创建一个输入框，第一个参数 title 是模型的字段名，第二个参数是该字段描述
         $form->text('title', '商品名称')->rules('required');
 
+        $form->text('long_title', '商品名称')->rules('required');
+
         $form->hidden('type', '类型')->value($this->type());
 
         // 创建一个单选框
