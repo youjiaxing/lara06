@@ -112,8 +112,17 @@ class CategoriesController extends AdminController
     public function apiIndex(Request $request)
     {
         $query = $request->get('q');
-        return Category::directories()
+        $paginator = Category::query()
+            ->where('is_directory', (bool)$request->input('is_directory', true))
             ->where('name', 'like', "%{$query}%")
-            ->paginate(null, ['id', 'name as text']);
+            ->paginate();
+
+        $paginator->setCollection($paginator->getCollection()->map(function (Category $category) {
+            return [
+                'id' => $category->id,
+                'text' => $category->full_name,
+            ];
+        }));
+        return $paginator;
     }
 }

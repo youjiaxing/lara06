@@ -7,7 +7,6 @@
 
 namespace App\Admin\Controllers;
 
-use App\Exceptions\InternalException;
 use App\Models\Category;
 use App\Models\Product;
 use Encore\Admin\Controllers\AdminController;
@@ -73,7 +72,17 @@ abstract class BaseProductController extends AdminController
 
         // 创建一个单选框
         $form->select('category_id', "商品类目")
-            ->options(Category::leafs()->pluck('name', 'id'));
+            // ->options(Category::leafs()->get()->pluck('full_name', 'id'));
+            ->options(
+                function ($id) {
+                    $category = Category::query()->find($id);
+                    if ($category) {
+                        return [$category->id => $category->full_name];
+                    }
+                }
+            )
+            ->ajax('/admin/api/categories?is_directory=0');
+
 
         // 创建一个选择图片的框
         $form->image('image', '封面图片')->rules('required|image');
@@ -95,6 +104,15 @@ abstract class BaseProductController extends AdminController
                 $form->text('description', 'SKU 描述')->rules('required');
                 $form->text('price', '单价')->rules('required|numeric|min:0.01');
                 $form->text('stock', '剩余库存')->rules('required|integer|min:0');
+            }
+        );
+
+        $form->hasMany(
+            'properties',
+            '商品属性',
+            function (Form\NestedForm $form) {
+                $form->text('name', '属性名')->rules(['required', 'between:1,255']);
+                $form->text('value', '属性值')->rules(['required', 'between:1,255']);
             }
         );
 

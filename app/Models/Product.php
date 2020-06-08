@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -10,23 +11,25 @@ use Illuminate\Support\Str;
  * Class Product
  * @package App\Models
  *
- * @property int                           $category_id
- * @property string                        $type
- * @property string                        $title
- * @property string                        $description
- * @property string                        $image
- * @property bool                          $on_sale
- * @property float                         $rating
- * @property int                           $sold_count
- * @property int                           $review_count
- * @property float                         $price
- * @property Carbon                        $created_at
- * @property Carbon                        $updated_at
+ * @property int                                 $category_id
+ * @property string                              $type
+ * @property string                              $title
+ * @property string                              $description
+ * @property string                              $image
+ * @property bool                                $on_sale
+ * @property float                               $rating
+ * @property int                                 $sold_count
+ * @property int                                 $review_count
+ * @property float                               $price
+ * @property Carbon                              $created_at
+ * @property Carbon                              $updated_at
  *
- * @property-read ProductSku[]             $skus
- * @property-read string                   $image_url
- * @property-read Category|null            $category
- * @property-read CrowdfundingProduct|null $crowdfunding
+ * @property-read ProductSku[]|Collection        $skus
+ * @property-read string                         $image_url
+ * @property-read Category|null                  $category
+ * @property-read CrowdfundingProduct|null       $crowdfunding
+ * @property-read ProductProperty[]|Collection   $properties
+ * @property-read \Illuminate\Support\Collection $grouped_properties
  */
 class Product extends Model
 {
@@ -96,5 +99,33 @@ class Product extends Model
     public function isCrowdfundProduct()
     {
         return $this->type === self::TYPE_CROWDFUNDING;
+    }
+
+    public function properties()
+    {
+        return $this->hasMany(ProductProperty::class, 'product_id', 'id');
+    }
+
+    /**
+     * @return Collection|\Illuminate\Support\Collection = [
+     * '品牌名称' => [
+     *      '苹果/Apple',
+     * ],
+     * '机身颜色' => [
+     *      '黑色',
+     *      '金色'
+     * ],
+     * '存储容量' => [
+     *      '256G'
+     * ]
+     * ]
+     */
+    protected function getGroupedPropertiesAttribute()
+    {
+        return $this->properties->groupBy('name')->map(
+            function (\Illuminate\Support\Collection $properties, $name) {
+                return $properties->pluck('value')->all();
+            }
+        );
     }
 }
