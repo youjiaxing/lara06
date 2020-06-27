@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  * @package App\Models
  *
  * @property int          $stock
- * @property float        price
+ * @property float        $price
  * @property string       $title
  * @property string       $description
  *

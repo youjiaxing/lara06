@@ -130,4 +130,34 @@ class Product extends Model
             }
         );
     }
+
+    public function toESArray()
+    {
+        $arr = $this->only(
+            [
+                'id',
+                'type',
+                'title',
+                'category_id',
+                'long_title',
+                'on_sale',
+                'rating',
+                'sold_count',
+                'review_count',
+                'price',
+            ]
+        );
+
+        $arr['description'] = strip_tags($this->description);
+        $arr['category'] = $this->category ? explode(' - ', $this->category->full_name) : '';
+        $arr['category_path'] = $this->category ? $this->category->path : '';
+        $arr['skus'] = $this->skus->map(function (ProductSku $sku) {
+            return $sku->only('title', 'description', 'price');
+        });
+        $arr['properties'] = $this->properties->map(function (ProductProperty $property) {
+            return $property->only('name', 'value');
+        });
+
+        return $arr;
+    }
 }

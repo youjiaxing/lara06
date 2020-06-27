@@ -7,6 +7,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Jobs\SyncOneProductToES;
 use App\Models\Category;
 use App\Models\Product;
 use Encore\Admin\Controllers\AdminController;
@@ -124,6 +125,10 @@ abstract class BaseProductController extends AdminController
                 $form->model()->price = collect($form->input('skus'))->where(Form::REMOVE_FLAG_NAME, 0)->min('price') ?: 0;
             }
         );
+
+        $form->saved(function(Form $form) {
+            dispatch(new SyncOneProductToES($form->model()));
+        });
 
         return $form;
     }
