@@ -308,13 +308,39 @@ body {
     }
 
     .product-detail  {
+        margin: 20px 0;
         .nav.nav-tabs > li > a {
             border-radius: 0 !important;
         }
-        margin: 20px 0;
         .tab-content {
             border: 1px solid #eee;
             padding: 20px;
+        }
+        .properties-list {
+            border-bottom: 1px solid #e6e6e6;
+            margin-bottom: 20px;
+
+            .properties-list-title {
+                padding: 5px 0;
+                font-weight: 700;
+                color: #999;
+            }
+
+            .properties-list-body {
+                list-style: none;
+                font-size: 12px;
+                padding: 5px 0;
+                text-indent: 0;
+
+                li {
+                    display: inline-block;
+                    width: 30%;
+                    overflow: hidden;
+                }
+            }
+        }
+        .product-description img {
+            max-width: 100%;
         }
     }
 

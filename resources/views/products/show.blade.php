@@ -14,7 +14,7 @@
 							<img class="cover" src="{{ $product->image_url }}" alt="">
 						</div>
 						<div class="col-7">
-							<div class="title">{{ $product->title }}</div>
+							<div class="title">{{ $product->long_title ? : $product->title}}</div>
 
 							@if ($product->isCrowdfundProduct())
 								@php
@@ -113,7 +113,21 @@
 						</ul>
 						<div class="tab-content">
 							<div role="tabpanel" class="tab-pane active" id="product-detail-tab">
-								{!! $product->description !!}
+								{{--产品属性 start--}}
+								<div class="properties-list">
+									<div class="properties-list-title">产品参数: </div>
+									<ul class="properties-list-body">
+										@foreach($product->grouped_properties as $name => $valueArr)
+											<li>
+												{{ $name }}: {{ implode(' ', $valueArr) }}
+											</li>
+										@endforeach
+									</ul>
+								</div>
+
+								<div class="product-description">
+									{!! $product->description !!}
+								</div>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="product-reviews-tab">
 								<!-- 评论列表开始 -->
@@ -203,12 +217,12 @@
                     }, function (error) { // 请求失败执行此回调
                         handleAxiosError(e);
                         // if (error.response.status === 401) {
-						//
+                        //
                         //     // http 状态码为 401 代表用户未登陆
                         //     swal('请先登录', '', 'error');
-						//
+                        //
                         // } else if (error.response.status === 422) {
-						//
+                        //
                         //     // http 状态码为 422 代表用户输入校验失败
                         //     var html = '<div>';
                         //     _.each(error.response.data.errors, function (errors) {
@@ -219,7 +233,7 @@
                         //     html += '</div>';
                         //     swal({content: $(html)[0], icon: 'error'})
                         // } else {
-						//
+                        //
                         //     // 其他情况应该是系统挂了
                         //     swal('系统错误', '', 'error');
                         // }
@@ -289,7 +303,7 @@
                     const params = {
                         sku_id: sku_id,
                         // amount: $('.cart_amount input').val(),
-	                    amount: parseInt(amountField.find('input[name=amount]').val()),
+                        amount: parseInt(amountField.find('input[name=amount]').val()),
                         address_id: parseInt(addressField.find('select[name=address_id]').val()),
                         remark: form.find('textarea[name=remark]').val()
                     };
@@ -306,7 +320,7 @@
 
                     window.location.href = '/orders/' + resp.data.id;
                 } catch (e) {
-	                handleAxiosError(e);
+                    handleAxiosError(e);
                     // console.log(e);
                     // console.log(e.message);
                     // console.log(e.code);
@@ -329,12 +343,12 @@
 
                 // 未登录
                 if (http_code === 401) {
-	                msg = "请先登录";
+                    msg = "请先登录";
                 }
                 // 表单验证错误
                 else if (http_code === 422 && resp.data.errors) {
                     msg = _.flatten(_.values(e.response.data.errors)).join("\n");
-                    console.log(e.response.data.errors,msg);
+                    console.log(e.response.data.errors, msg);
                 }
                 // 其他错误
                 else if (resp.data.message) {

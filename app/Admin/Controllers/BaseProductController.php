@@ -7,7 +7,7 @@
 
 namespace App\Admin\Controllers;
 
-use App\Exceptions\InternalException;
+use App\Jobs\SyncOneProductToES;
 use App\Models\Category;
 use App\Models\Product;
 use Encore\Admin\Controllers\AdminController;
@@ -69,11 +69,23 @@ abstract class BaseProductController extends AdminController
         // 创建一个输入框，第一个参数 title 是模型的字段名，第二个参数是该字段描述
         $form->text('title', '商品名称')->rules('required');
 
+        $form->text('long_title', '商品名称')->rules('required');
+
         $form->hidden('type', '类型')->value($this->type());
 
         // 创建一个单选框
         $form->select('category_id', "商品类目")
-            ->options(Category::leafs()->pluck('name', 'id'));
+            // ->options(Category::leafs()->get()->pluck('full_name', 'id'));
+            ->options(
+                function ($id) {
+                    $category = Category::query()->find($id);
+                    if ($category) {
+                        return [$category->id => $category->full_name];
+                    }
+                }
+            )
+            ->ajax('/admin/api/categories?is_directory=0');
+
 
         // 创建一个选择图片的框
         $form->image('image', '封面图片')->rules('required|image');
@@ -98,12 +110,25 @@ abstract class BaseProductController extends AdminController
             }
         );
 
+        $form->hasMany(
+            'properties',
+            '商品属性',
+            function (Form\NestedForm $form) {
+                $form->text('name', '属性名')->rules(['required', 'between:1,255']);
+                $form->text('value', '属性值')->rules(['required', 'between:1,255']);
+            }
+        );
+
         // 定义事件回调，当模型即将保存时会触发这个回调
         $form->saving(
             function (Form $form) {
                 $form->model()->price = collect($form->input('skus'))->where(Form::REMOVE_FLAG_NAME, 0)->min('price') ?: 0;
             }
         );
+
+        $form->saved(function(Form $form) {
+            dispatch(new SyncOneProductToES($form->model()));
+        });
 
         return $form;
     }

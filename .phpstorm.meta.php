@@ -15,6 +15,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
@@ -181,6 +182,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 'Facade\IgnitionContracts\SolutionProviderRepository' => \Facade\Ignition\SolutionProviders\SolutionProviderRepository::class,
@@ -345,6 +347,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 'Facade\IgnitionContracts\SolutionProviderRepository' => \Facade\Ignition\SolutionProviders\SolutionProviderRepository::class,
@@ -509,6 +512,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 'Facade\IgnitionContracts\SolutionProviderRepository' => \Facade\Ignition\SolutionProviders\SolutionProviderRepository::class,
@@ -673,6 +677,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 'Facade\IgnitionContracts\SolutionProviderRepository' => \Facade\Ignition\SolutionProviders\SolutionProviderRepository::class,
@@ -837,6 +842,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 'Facade\IgnitionContracts\SolutionProviderRepository' => \Facade\Ignition\SolutionProviders\SolutionProviderRepository::class,
@@ -1001,6 +1007,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 'Facade\IgnitionContracts\SolutionProviderRepository' => \Facade\Ignition\SolutionProviders\SolutionProviderRepository::class,
@@ -1165,6 +1172,7 @@ namespace PHPSTORM_META {
         map(
             [
                 '' => '@',
+                'es' => \Elasticsearch\Client::class,
                 "alipay" => \Yansongda\Pay\Gateways\Alipay::class,
                 "wechat" => \Yansongda\Pay\Gateways\Wechat::class,
                 'Facade\IgnitionContracts\SolutionProviderRepository' => \Facade\Ignition\SolutionProviders\SolutionProviderRepository::class,
