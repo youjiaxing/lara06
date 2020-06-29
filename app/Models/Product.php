@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -151,13 +152,28 @@ class Product extends Model
         $arr['description'] = strip_tags($this->description);
         $arr['category'] = $this->category ? explode(' - ', $this->category->full_name) : '';
         $arr['category_path'] = $this->category ? $this->category->path : '';
-        $arr['skus'] = $this->skus->map(function (ProductSku $sku) {
-            return $sku->only('title', 'description', 'price');
-        });
-        $arr['properties'] = $this->properties->map(function (ProductProperty $property) {
-            return $property->only('name', 'value');
-        });
+        $arr['skus'] = $this->skus->map(
+            function (ProductSku $sku) {
+                return $sku->only('title', 'description', 'price');
+            }
+        );
+        $arr['properties'] = $this->properties->map(
+            function (ProductProperty $property) {
+                $arr = $property->only('name', 'value');
+                $arr['search_value'] = $arr['name'] . ':' . $arr['value'];
+                return $arr;
+            }
+        );
 
         return $arr;
+    }
+
+    /**
+     * @param Builder $query
+     * @param int[]   $productIds
+     */
+    public function scopeOrderByIds($query, $productIds)
+    {
+        return $query->orderByRaw('FIND_IN_SET(`id`, ?)', implode(',', $productIds));
     }
 }

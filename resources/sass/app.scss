@@ -89,10 +89,7 @@ body {
     }
 }
 
-.products-index-page, .products-favorites-page {
-    .pagination {
-        margin-right: 5px;
-    }
+@mixin product-list {
     .products-list {
         padding: 0 15px;
         .product-item {
@@ -150,6 +147,13 @@ body {
             }
         }
     }
+}
+
+.products-index-page, .products-favorites-page {
+    .pagination {
+        margin-right: 5px;
+    }
+    @include product-list;
     .search-form {
         padding: 0 5px 10px;
         .category-breadcrumb {
@@ -169,6 +173,21 @@ body {
             a {
                 color: #666;
                 text-decoration: none;
+            }
+        }
+        .filter {
+            border: 1px red solid;
+            font-size: 12px;
+            padding: 2px 0 2px 2px;
+            .filter-value {
+                color: red;
+            }
+            .remove-filter {
+                text-decoration: none;
+                color: white;
+                font-weight: bold;
+                background: red;
+                padding: 2px;
             }
         }
     }
@@ -341,6 +360,16 @@ body {
         }
         .product-description img {
             max-width: 100%;
+        }
+    }
+
+    .similar-products {
+        @include product-list;
+        .title {
+            font-weight: normal;
+        }
+        .price {
+            background-color: unset;
         }
     }
 

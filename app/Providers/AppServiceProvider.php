@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Support\ServiceProvider;
 use Monolog\Logger;
@@ -58,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
 
             return $builder->build();
         });
+        $this->app->alias('es', Client::class);
     }
 
     /**

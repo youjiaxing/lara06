@@ -12,7 +12,7 @@ class SyncProducts extends Command
      *
      * @var string
      */
-    protected $signature = 'es:sync-products';
+    protected $signature = 'es:sync-products {--index=products}';
 
     /**
      * The console command description.
@@ -38,12 +38,13 @@ class SyncProducts extends Command
      */
     public function handle()
     {
+        $index = $this->option('index');
         $es = app('es');
         Product::query()
             ->with(['skus', 'properties'])
             ->chunkById(
                 100,
-                function ($products) use ($es) {
+                function ($products) use ($es, $index) {
                     $this->info(sprintf("正在同步 ID 范围为 %s 至 %s 的商品", $products->first()->id, $products->last()->id));
 
                     $req = [
@@ -53,7 +54,7 @@ class SyncProducts extends Command
                         /* @var \App\Models\Product $product */
                         $req['body'][] = [
                             'index' => [
-                                '_index' => 'products',
+                                '_index' => $index,
                                 '_id' => $product->id,
                             ]
                         ];

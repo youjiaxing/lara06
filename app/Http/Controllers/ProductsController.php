@@ -6,11 +6,127 @@ use App\Exceptions\InvalidRequestException;
 use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\SearchBuilders\ProductSearchBuilder;
+use App\Services\ProductService;
+use Elasticsearch\Client;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 class ProductsController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, Client $es)
+    {
+        // 分页
+        $pageSize = 16;
+        $page = (int)$request->input('page', 1);
+
+        // 构建 ES 查询参数
+        $builder = new ProductSearchBuilder();
+        $builder->paginate($pageSize, $page)
+            ->onSale();
+
+        // 多字段搜索
+        if ($search = $request->input('search', '')) {
+            // 对于空格隔开的搜索, 视为需同时满足的多个条件
+            $words = array_filter(explode(' ', $search));
+            $builder->keywords($words);
+        }
+
+        // 商品类别筛选
+        $categoryId = (int)$request->input('category_id');
+        if ($categoryId && $category = Category::query()->find($categoryId)) {
+            $builder->category($category);
+        }
+
+        // 从用户请求参数获取 filters
+        $propertyFilters = [];
+        if ($filterString = $request->input('filters')) {
+            $filterArray = explode('|', $filterString);
+            foreach ($filterArray as $filter) {
+                list($name, $value) = explode(':', $filter);
+                $builder->propertyFilter($name, $value);
+                $propertyFilters[$name] = $value;
+
+            }
+        }
+
+        // 仅在用户输入搜索词或使用类目筛选时才会做聚合
+        if ($search || isset($category)) {
+            $builder->propertyAggregate();
+        }
+
+        // 排序
+        if ($order = $request->input('order', '')) {
+            if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)) {
+                if (in_array($m[1], ['price', 'sold_count', 'rating'])) {
+                    $builder->orderBy($m[1], $m[2]);
+                }
+            }
+        }
+
+        $esStart = microtime(true);
+        $result = $es->search($builder->build());
+        $esEnd = microtime(true);
+        // dump(json_encode($builder->build()['body']));
+        // dump($params, $result);
+
+        // 获取搜索结果的所有商品 id
+        $productIds = Arr::pluck($result['hits']['hits'], '_source.id');
+        // 读取商品数据(需按照 ES 结果中的顺序来)
+        $products = Product::query()
+            ->whereIn('id', $productIds)
+            ->orderByIds($productIds)
+            ->get();
+
+        // 构建 Paginator 对象
+        $products = new LengthAwarePaginator(
+            $products,
+            $result['hits']['total']['value'],
+            $pageSize,
+            $page,
+            [
+                'path' => route('products.index', false)
+            ]
+        );
+
+        // 使用聚合结果支持 "分面搜索"
+        $properties = [];
+        if (isset($result['aggregations'])) {
+            $properties = collect($result['aggregations']['properties']['properties']['buckets'])
+                ->map(
+                    function ($bucket) {
+                        return [
+                            'key' => $bucket['key'],
+                            'values' => collect($bucket['value']['buckets'])->pluck('key')->all(),
+                        ];
+                    }
+                )
+                ->filter(
+                    function ($bucket) use ($propertyFilters) {
+                        return !array_key_exists($bucket['key'], $propertyFilters) && count($bucket['values']) > 1;
+                    }
+                )
+                ->toArray();
+        }
+
+        return view(
+            'products.index',
+            [
+                'products' => $products,
+                'category' => $category ?? null,
+                'filters' => [
+                    'search' => $search,
+                    'order' => $order,
+                    'category' => $categoryId,
+                ],
+                'properties' => $properties,
+                'propertyFilters' => $propertyFilters,
+            ]
+        );
+    }
+
+    public function index_from_db(Request $request)
     {
         // 创建一个查询构造器
         $builder = Product::query()->where('on_sale', true);
@@ -81,7 +197,7 @@ class ProductsController extends Controller
         );
     }
 
-    public function show(Product $product, Request $request)
+    public function show(Product $product, Request $request, ProductService $productService)
     {
         // 判断商品是否已经上架，如果没有上架则抛出异常。
         if (!$product->on_sale) {
@@ -104,13 +220,17 @@ class ProductsController extends Controller
             ->limit(10) // 取出 10 条
             ->get();
 
+        // 查找相似商品
+        $similarProducts = $productService->getSimilarProducts($product);
+
         // 最后别忘了注入到模板中
         return view(
             'products.show',
             [
                 'product' => $product,
                 'favored' => $favored,
-                'reviews' => $reviews
+                'reviews' => $reviews,
+                'similar' => $similarProducts,
             ]
         );
     }
