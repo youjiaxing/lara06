@@ -111,11 +111,47 @@
 								   aria-selected="false">用户评价</a>
 							</li>
 						</ul>
+
+						{{--猜你喜欢--}}
+						@if (count($similar) > 0)
+							<div class="similar-products">
+								<div class="title">猜你喜欢</div>
+								<div class="row products-list">
+									@foreach($similar as $similarProduct)
+										@php
+											/* @var \App\Models\Product $similarProduct */
+										@endphp
+										<div class="col-3 product-item">
+											<div class="product-content">
+												<div class="top">
+													<div class="img">
+														<a href="{{ route('products.show', ['product' => $similarProduct->id]) }}">
+															<img src="{{ $similarProduct->image_url }}" alt="product image">
+														</a>
+													</div>
+													<div class="price">
+														<b>￥</b> {{ $similarProduct->price }}
+													</div>
+													<div class="title">
+														<a href="{{ route('products.show', ['product' => $similarProduct->id]) }}">
+															{{ $similarProduct->title }}
+														</a>
+													</div>
+												</div>
+											</div>
+										</div>
+									@endforeach
+
+								</div>
+							</div>
+						@endif
+						{{--猜你喜欢 结束--}}
+
 						<div class="tab-content">
 							<div role="tabpanel" class="tab-pane active" id="product-detail-tab">
 								{{--产品属性 start--}}
 								<div class="properties-list">
-									<div class="properties-list-title">产品参数: </div>
+									<div class="properties-list-title">产品参数:</div>
 									<ul class="properties-list-body">
 										@foreach($product->grouped_properties as $name => $valueArr)
 											<li>
