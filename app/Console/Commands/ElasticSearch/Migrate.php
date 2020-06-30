@@ -33,10 +33,9 @@ class Migrate extends Command
      *
      * @return void
      */
-    public function __construct(Client $es)
+    public function __construct()
     {
         parent::__construct();
-        $this->es = $es;
     }
 
     /**
@@ -44,8 +43,10 @@ class Migrate extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle(Client $es)
     {
+        $this->es = $es;
+
         /**
          * @var Index[] $indices
          */
