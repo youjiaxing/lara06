@@ -31,9 +31,9 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')
         //          ->hourly();
 
-        if (!Application::getInstance()->isLocal()) {
-            return;
-        }
+        // if (Application::getInstance()->isLocal()) {
+        //     return;
+        // }
 
         // 众筹商品结束处理
         $schedule->command(FinishCrowdfundingCommand::class)
