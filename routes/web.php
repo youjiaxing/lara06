@@ -31,6 +31,7 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
     Route::get('cart', 'CartController@index')->name('cart.index');
     Route::delete('cart/{sku}', 'CartController@remove')->name('cart.remove');
 
+    // 订单
     Route::post('orders', 'OrdersController@store')->name('orders.store');
     Route::get('orders', 'OrdersController@index')->name('orders.index');
     Route::get('orders/{order}', 'OrdersController@show')->name('orders.show');
@@ -41,6 +42,9 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
 
     // 众筹下单
     Route::post('crowdfunding_orders', 'OrdersController@crowdfundStore')->name('crowdfunding_orders.store');
+
+    // 秒杀下单
+    Route::post('seckill_orders', 'OrdersController@seckillStore')->name('seckill_orders.store');
 
     // 订单支付 - 支付宝
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');

@@ -32,17 +32,18 @@ use Illuminate\Support\Str;
  * @property-read CrowdfundingProduct|null       $crowdfunding
  * @property-read ProductProperty[]|Collection   $properties
  * @property-read \Illuminate\Support\Collection $grouped_properties
+ * @property-read SeckillProduct|null            $seckill
  */
 class Product extends Model
 {
     const TYPE_NORMAL = "normal";
     const TYPE_CROWDFUNDING = "crowdfunding";
-    // const TYPE_SECKILL = "seckill";
+    const TYPE_SECKILL = "seckill";
 
     private static $typeMap = [
         self::TYPE_NORMAL => '普通商品',
         self::TYPE_CROWDFUNDING => "众筹商品",
-        // self::TYPE_SECKILL => "秒杀商品",
+        self::TYPE_SECKILL => "秒杀商品",
     ];
 
     protected $fillable = [
@@ -102,6 +103,14 @@ class Product extends Model
     public function isCrowdfundProduct()
     {
         return $this->type === self::TYPE_CROWDFUNDING;
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function seckill()
+    {
+        return $this->hasOne(SeckillProduct::class, 'product_id', 'id');
     }
 
     public function properties()

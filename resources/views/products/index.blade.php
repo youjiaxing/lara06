@@ -8,7 +8,8 @@
 				<div class="card-body">
 					<!-- 筛选组件开始 -->
 					<form action="{{ route('products.index') }}" class="search-form">
-						<input type="hidden" name="filters" value="{{ collect($propertyFilters)->map(function($value, $key) {  return $key . ":". $value;})->implode('|') }}">
+						<input type="hidden" name="filters"
+						       value="{{ collect($propertyFilters)->map(function($value, $key) {  return $key . ":". $value;})->implode('|') }}">
 
 						<div class="form-row">
 							<div class="col-md-9">
@@ -36,7 +37,7 @@
 										@endif
 
 										{{--商品属性面包屑开始--}}
-										<!-- 遍历当前属性筛选条件 -->
+									<!-- 遍历当前属性筛选条件 -->
 										@foreach($propertyFilters as $name => $value)
 											<span class="filter">
 												{{ $name }}: <span class="filter-value">{{ $value }}</span>
@@ -135,18 +136,18 @@
                 $('.search-form').submit();
             });
 
-	        $('.faceted-search .filter-values').on('click', 'a', function (e) {
-		        e.preventDefault();
+            $('.faceted-search .filter-values').on('click', 'a', function (e) {
+                e.preventDefault();
 
-	            let key = this.dataset.key;
-	            let value = this.dataset.value;
+                let key = this.dataset.key;
+                let value = this.dataset.value;
                 appendFilterToQuery(key, value);
-	        });
+            });
 
-	        $('.remove-filter').on('click', function (e) {
-		        e.preventDefault();
+            $('.remove-filter').on('click', function (e) {
+                e.preventDefault();
 
-		        let key = this.dataset.key;
+                let key = this.dataset.key;
                 removeFilterFromQuery(key);
             })
         })
@@ -197,8 +198,8 @@
                 return key !== name;
             })
             searches['filters'] = filters;
-	        console.log(filters);
-	        location.search = buildSearch(searches);
+            console.log(filters);
+            location.search = buildSearch(searches);
         }
 	</script>
 @endsection

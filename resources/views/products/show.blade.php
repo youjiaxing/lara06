@@ -21,7 +21,7 @@
 									$crowdfund = $product->crowdfunding
 								@endphp
 
-								{{--众筹商品信息开始--}}
+								{{--众筹商品信息 start--}}
 								<div class="crowdfunding-info">
 
 									<div class="have-text">已筹到</div>
@@ -44,7 +44,7 @@
 										</div>
 									@endif
 								</div>
-								{{--众筹商品信息结束--}}
+								{{--众筹商品信息 end--}}
 							@else
 								{{--普通商品信息开始--}}
 								<div class="price"><label>价格</label><em>￥</em><span>{{ $product->price }}</span></div>
@@ -89,6 +89,14 @@
 											<button class="btn btn-primary" id="btn-crowdfunding-commit">参与众筹</button>
 										@else
 											<button class="btn btn-default" disabled>{{ $crowdfund->status_str }}</button>
+										@endif
+									@elseif ($product->type === \App\Models\Product::TYPE_SECKILL)
+										@if ($product->seckill->is_before_start)
+											<button disabled class="btn btn-primary btn-seckill countdown">抢购倒计时</button>
+										@elseif ($product->seckill->is_after_end)
+											<button disabled class="btn btn-primary btn-seckill">抢购已结束</button>
+										@else
+											<button class="btn btn-primary btn-seckill">立即抢购</button>
 										@endif
 									@else
 										<button class="btn btn-primary btn-add-to-cart">加入购物车</button>
@@ -200,7 +208,13 @@
 @endsection
 
 @section('scriptsAfterJs')
+	<!-- 如果是秒杀商品并且尚未开始秒杀，则引入 momentjs 类库 -->
+	{{--	@if($product->type == \App\Models\Product::TYPE_SECKILL && $product->seckill->is_before_start)--}}
+	{{--		<script src="https://cdn.bootcss.com/moment.js/2.22.1/moment.min.js"></script>--}}
+	{{--	@endif--}}
+
 	<script>
+
         $(document).ready(function () {
             $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'});
             $('.sku-btn').click(function () {
@@ -400,6 +414,76 @@
             swal("错误", msg, "error");
         }
 
+        // 秒杀商品的逻辑
+		@if ($product->type == \App\Models\Product::TYPE_SECKILL)
+        // 未开始秒杀
+		@if ($product->seckill->is_before_start)
+        // "倒计时" 显示
+        let startTime = moment.unix({{ $product->seckill->start_at->getTimestamp() }});
+        let hdl = setInterval(function () {
+            let now = moment();
+            if (now.isAfter(startTime)) {
+                $('.btn-seckill').removeAttr('disabled').removeClass('countdown').text('立即抢购');
+                clearInterval(hdl);
+                return;
+            }
+
+            let hourDiff = startTime.diff(now, 'hours').toString().padStart(2, '0');
+            let minDiff = (startTime.diff(now, 'minutes') % 60).toString().padStart(2, '0');
+            let secDiff = (startTime.diff(now, 'seconds') % 60).toString().padStart(2, '0');
+            $('.btn-seckill').text(`抢购倒计时 ${hourDiff}:${minDiff}:${secDiff}`);
+        }, 500);
+		@endif
+
+        // 秒杀按钮点击
+        $('.btn-seckill').on('click', function (e) {
+            // 判断是否选择 sku
+	        let skuInput = $('input[name=skus]:checked');
+            let skuId = skuInput.val();
+            console.log(skuId);
+            if (!skuId) {
+                swal('请选择购买的商品', '', 'warning');
+                return;
+            }
+	        let skuStock = parseInt(skuInput.parent().data('stock'));
+            if (skuStock <= 0) {
+                swal("库存不足", '', 'warning');
+                return;
+            }
+
+
+            // 弹框提示
+            let addressSelects = $('<div class="form-group">' +
+                '<label for="address">' +
+                '<select class="form-control" name="address" id="address">' +
+                '</select>' +
+                '</div>');
+            let addresses = {!! json_encode(Auth::check() ? Auth::user()->addresses : []) !!};
+            addresses.forEach(function (item, index) {
+                let isSelected = index === 0 ? "selected" : "";
+                addressSelects.find('select').append(`<option ${isSelected} value="${item.id}">${item.full_address}</option>`);
+            });
+            swal({
+	            title: "选择地址",
+                content: addressSelects[0],
+	            buttons: ["取消", "秒杀"],
+            }).then(function (confirm) {
+                if (!confirm) {
+                    return;
+                }
+
+                let addressId = addressSelects.find('select').val();
+
+                axios.post('{{ route('seckill_orders.store') }}', {
+                    'remark': '',
+	                'address_id': addressId,
+	                'product_sku_id': skuId,
+                }).then(async function (response) {
+	                await swal("订单提交成功",'','success');
+	                window.location.href = `/orders/${response.data.id}`;
+                }).catch(handleAxiosError);
+            });
+        });
+		@endif
 	</script>
 @endsection
-

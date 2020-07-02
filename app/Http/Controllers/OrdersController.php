@@ -8,6 +8,7 @@ use App\Exceptions\InvalidRequestException;
 use App\Http\Requests\ApplyRefundRequest;
 use App\Http\Requests\CrowdfundingOrderRequest;
 use App\Http\Requests\OrderRequest;
+use App\Http\Requests\SeckillOrderRequest;
 use App\Http\Requests\SendReviewRequest;
 use App\Models\CouponCode;
 use App\Models\ProductSku;
@@ -75,6 +76,24 @@ class OrdersController extends Controller
         $amount = $request->input('amount');
 
         return $orderService->crowdfundingStore($user, $userAddress, $remark, $sku, $amount);
+    }
+
+    /**
+     * 秒杀商品下单接口
+     *
+     * @param SeckillOrderRequest $request
+     * @param OrderService        $orderService
+     *
+     * @throws \Throwable
+     */
+    public function seckillStore(SeckillOrderRequest $request, OrderService $orderService)
+    {
+        $user = $request->user();
+        $address = UserAddress::query()->findOrFail($request->input('address_id'));
+        $remark = (string)$request->input('remark', '');
+        $sku = ProductSku::query()->findOrFail($request->input('product_sku_id'));
+        $order = $orderService->seckillStore($user, $address, $remark, $sku);
+        return $order;
     }
 
     public function show(Order $order, Request $request)

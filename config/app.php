@@ -231,8 +231,10 @@ return [
     ],
 
     // 订单未付款超时时间
-    // 'order_ttl' => 1800,
-    'order_ttl' => 18000,
+    'order_ttl' => 1800,
+    // 秒杀订单未付款超时时间
+    'seckill_order_ttl' => 600,
+    // 'order_ttl' => 18000,
 
     // Ngrok 分配的地址
     'ngrok_url' => env('NGROK_URL'),

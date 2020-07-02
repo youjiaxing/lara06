@@ -40,5 +40,7 @@ Route::group([
 
     $router->resource('crowdfund_products', 'CrowdfundingProductsController');
 
+    $router->resource('seckill_products', 'SeckillProductsController');
+
     $router->get('api/categories', 'CategoriesController@apiIndex');
 });

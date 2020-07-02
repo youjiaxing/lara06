@@ -4,15 +4,14 @@ namespace App\Services;
 
 use App\Exceptions\CouponCodeUnavailableException;
 use App\Exceptions\InternalException;
-use App\Models\CouponCode;
-use App\Models\OrderItem;
-use App\Models\Product;
-use App\Models\User;
-use App\Models\UserAddress;
-use App\Models\Order;
-use App\Models\ProductSku;
 use App\Exceptions\InvalidRequestException;
 use App\Jobs\CloseOrder;
+use App\Models\CouponCode;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\ProductSku;
+use App\Models\User;
+use App\Models\UserAddress;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -159,6 +158,64 @@ class OrderService
         // 定时关闭订单
         $closeDelay = min(config('app.order_ttl'), $sku->product->crowdfunding->end_at->getTimestamp() - time());
         dispatch(new CloseOrder($order, $closeDelay));
+
+        return $order;
+    }
+
+    /**
+     * 秒杀商品专用下单
+     *
+     * @param User        $user
+     * @param UserAddress $address
+     * @param string      $remark
+     * @param ProductSku  $sku
+     * @param int         $amount
+     *
+     * @return mixed
+     * @throws \Throwable
+     */
+    public function seckillStore(User $user, UserAddress $address, string $remark, ProductSku $sku, int $amount = 1)
+    {
+        $order = DB::transaction(
+            function () use ($user, $address, $remark, $sku, $amount) {
+                // 更新地址使用时间
+                $address->touchLastUsedAt();
+
+                // 创建父订单
+                $order = new Order(
+                    [
+                        'type' => Order::TYPE_SECKILL,
+                        'address' => $this->extractAddress($address),
+                        'total_amount' => $sku->price * $amount,
+                        'remark' => $remark,
+                    ]
+                );
+                $order->user()->associate($user);
+                $order->save();
+
+                // 创建子订单
+                $orderItem = new OrderItem(
+                    [
+                        'amount' => $amount,
+                        'price' => $sku->price,
+                    ]
+                );
+                $orderItem->product()->associate($sku->product_id);
+                $orderItem->productSku()->associate($sku);
+                $orderItem->order()->associate($order);
+                $orderItem->save();
+
+                // 扣减库存
+                if ($sku->decreaseStock($amount) <= 0) {
+                    throw new InvalidRequestException("库存不足");
+                }
+
+                return $order;
+            }
+        );
+
+        // 定时关闭订单
+        dispatch(new CloseOrder($order, config('app.seckill_order_ttl')));
 
         return $order;
     }

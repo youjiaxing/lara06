@@ -46,6 +46,7 @@ class Order extends Model
 
     const TYPE_NORMAL = 'normal';
     const TYPE_CROWDFUNDING = 'crowdfunding';
+    const TYPE_SECKILL = 'seckill';
 
     const PAYMENT_METHOD_ALIPAY = 'alipay';
     const PAYMENT_METHOD_WECHAT = 'wechat';
@@ -68,6 +69,7 @@ class Order extends Model
     private static $typeMap = [
         self::TYPE_NORMAL => '普通商品订单',
         self::TYPE_CROWDFUNDING => '众筹商品订单',
+        self::TYPE_SECKILL => '秒杀商品订单',
     ];
 
     private static $paymentMethodStr = [
