@@ -180,6 +180,15 @@ class OrderService
         //     throw new InvalidRequestException("库存不足");
         // }
 
+        // 提前扣库存
+        $redisResult = app(SeckillService::class)->decrCachedSkuStock($sku->id, 1);
+        if ($redisResult === -1) {
+            \Log::warning("秒杀商品sku($sku->id})扣减库存失败");
+            throw new InvalidRequestException("last check: stock not enough(库存不足)");
+        } else {
+            \Log::debug("秒杀商品sku($sku->id)库存(缓存): $redisResult");
+        }
+
         try {
             $order = DB::transaction(
                 function () use ($user, $address, $remark, $sku, $amount) {
@@ -215,13 +224,6 @@ class OrderService
                         throw new InvalidRequestException("库存不足");
                     }
 
-                    // 晚点尝试将此处的扣库存挪到前面
-                    $redisResult = app(SeckillService::class)->decrCachedSkuStock($sku->id, 1);
-                    if ($redisResult === -1) {
-                        \Log::warning("秒杀商品sku($sku->id})扣减库存失败");
-                    } else {
-                        \Log::debug("秒杀商品sku($sku->id)库存(缓存): $redisResult");
-                    }
                     return $order;
                 }
             );

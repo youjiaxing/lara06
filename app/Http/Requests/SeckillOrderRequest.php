@@ -28,11 +28,11 @@ class SeckillOrderRequest extends Request
                     // 从 Redis 确认秒杀商品是否存在且库存充足
                     $stock = app(SeckillService::class)->getCachedSkuStock($value);
                     if ($stock === false) {
-                        return $fail('秒杀商品不存在');
+                        return $fail('sku not exists: 秒杀商品不存在');
                     }
 
                     if ($stock <= 0) {
-                        return $fail('库存不足');
+                        return $fail('stock not enougth: 库存不足');
                     }
 
                     /**
