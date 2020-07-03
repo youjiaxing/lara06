@@ -176,10 +176,6 @@ class OrderService
      */
     public function seckillStore(User $user, UserAddress $address, string $remark, ProductSku $sku, int $amount = 1)
     {
-        // if (app(SeckillService::class)->decrCachedSkuStock($sku->id, 1) >= 0) {
-        //     throw new InvalidRequestException("库存不足");
-        // }
-
         // 提前扣库存
         $redisResult = app(SeckillService::class)->decrCachedSkuStock($sku->id, 1);
         if ($redisResult === -1) {
@@ -188,6 +184,8 @@ class OrderService
         } else {
             \Log::debug("秒杀商品sku($sku->id)库存(缓存): $redisResult");
         }
+
+        \Log::info("预扣除库存成功, 剩余库存: $redisResult");
 
         try {
             $order = DB::transaction(
@@ -228,9 +226,10 @@ class OrderService
                 }
             );
         } catch (\Throwable $e) {
-            throw $e;
+            throw new InternalException("seckill transaction error:" . $e->getMessage(), "system busy");
+            // throw $e;
         } finally {
-            // app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
+            app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
         }
 
         // 定时关闭订单
