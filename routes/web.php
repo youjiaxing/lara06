@@ -43,9 +43,6 @@ Route::group(['middleware' => ['auth', 'verified']], function() {
     // 众筹下单
     Route::post('crowdfunding_orders', 'OrdersController@crowdfundStore')->name('crowdfunding_orders.store');
 
-    // 秒杀下单
-    Route::post('seckill_orders', 'OrdersController@seckillStore')->name('seckill_orders.store');
-
     // 订单支付 - 支付宝
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');
     // 订单支付 - 支付宝的同步回调
@@ -80,4 +77,5 @@ Route::post('installments/alipay/notify', 'InstallmentsController@alipayNotify')
 // 商品首页
 Route::get('products/{product}', 'ProductsController@show')->name('products.show');
 
-
+// 秒杀下单 - 性能优化, 不提前验证用户是否登录
+Route::post('seckill_orders', 'OrdersController@seckillStore')->name('seckill_orders.store');

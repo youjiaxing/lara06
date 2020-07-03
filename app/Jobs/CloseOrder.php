@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Services\SeckillService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -38,7 +41,13 @@ class CloseOrder implements ShouldQueue
             $this->order->update(['closed' => true]);
             // 循环遍历订单中的商品 SKU，将订单中的数量加回到 SKU 的库存中去
             foreach ($this->order->items as $item) {
+                /* @var OrderItem $item */
                 $item->productSku->addStock($item->amount);
+
+                // 秒杀商品需处理库存的缓存
+                if ($item->productSku->product->type === Product::TYPE_SECKILL) {
+                    app(SeckillService::class)->incrCachedSkuStock($item->productSku->id, $item->amount);
+                }
             }
             if ($this->order->couponCode) {
                 $this->order->couponCode->changeUsed(false);

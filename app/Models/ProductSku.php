@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  * Class ProductSku
  * @package App\Models
  *
+ * @property int          $id
  * @property int          $stock
  * @property float        $price
  * @property string       $title

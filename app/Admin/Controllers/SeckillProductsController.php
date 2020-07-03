@@ -3,6 +3,8 @@
 namespace App\Admin\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductSku;
+use App\Services\SeckillService;
 use Encore\Admin\Controllers\AdminController;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
@@ -32,6 +34,12 @@ class SeckillProductsController extends BaseProductController
     {
         $form->datetime('seckill.start_at', "秒杀开始时间")->rules(['required', 'date']);
         $form->datetime('seckill.end_at', '秒杀结束时间')->rules(['required', 'date']);
+
+        $form->saved(function (Form $form) {
+            /* @var Product $product */
+            $product = $form->model();
+            app(SeckillService::class)->cacheStock($product);
+        });
     }
 
     protected function type()

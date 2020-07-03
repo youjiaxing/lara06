@@ -176,43 +176,55 @@ class OrderService
      */
     public function seckillStore(User $user, UserAddress $address, string $remark, ProductSku $sku, int $amount = 1)
     {
-        $order = DB::transaction(
-            function () use ($user, $address, $remark, $sku, $amount) {
-                // 更新地址使用时间
-                $address->touchLastUsedAt();
+        // if (app(SeckillService::class)->decrCachedSkuStock($sku->id, 1) >= 0) {
+        //     throw new InvalidRequestException("库存不足");
+        // }
 
-                // 创建父订单
-                $order = new Order(
-                    [
-                        'type' => Order::TYPE_SECKILL,
-                        'address' => $this->extractAddress($address),
-                        'total_amount' => $sku->price * $amount,
-                        'remark' => $remark,
-                    ]
-                );
-                $order->user()->associate($user);
-                $order->save();
+        try {
+            $order = DB::transaction(
+                function () use ($user, $address, $remark, $sku, $amount) {
+                    // 更新地址使用时间
+                    $address->touchLastUsedAt();
 
-                // 创建子订单
-                $orderItem = new OrderItem(
-                    [
-                        'amount' => $amount,
-                        'price' => $sku->price,
-                    ]
-                );
-                $orderItem->product()->associate($sku->product_id);
-                $orderItem->productSku()->associate($sku);
-                $orderItem->order()->associate($order);
-                $orderItem->save();
+                    // 创建父订单
+                    $order = new Order(
+                        [
+                            'type' => Order::TYPE_SECKILL,
+                            'address' => $this->extractAddress($address),
+                            'total_amount' => $sku->price * $amount,
+                            'remark' => $remark,
+                        ]
+                    );
+                    $order->user()->associate($user);
+                    $order->save();
 
-                // 扣减库存
-                if ($sku->decreaseStock($amount) <= 0) {
-                    throw new InvalidRequestException("库存不足");
+                    // 创建子订单
+                    $orderItem = new OrderItem(
+                        [
+                            'amount' => $amount,
+                            'price' => $sku->price,
+                        ]
+                    );
+                    $orderItem->product()->associate($sku->product_id);
+                    $orderItem->productSku()->associate($sku);
+                    $orderItem->order()->associate($order);
+                    $orderItem->save();
+
+                    // 扣减库存
+                    if ($sku->decreaseStock($amount) <= 0) {
+                        throw new InvalidRequestException("库存不足");
+                    }
+
+                    // 晚点尝试将此处的扣库存挪到前面
+                    app(SeckillService::class)->decrCachedSkuStock($sku->id, 1);
+                    return $order;
                 }
-
-                return $order;
-            }
-        );
+            );
+        } catch (\Throwable $e) {
+            throw $e;
+        } finally {
+            // app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
+        }
 
         // 定时关闭订单
         dispatch(new CloseOrder($order, config('app.seckill_order_ttl')));

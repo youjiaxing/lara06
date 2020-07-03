@@ -5,7 +5,10 @@ namespace App\Http\Requests;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductSku;
+use App\Services\SeckillService;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class SeckillOrderRequest extends Request
@@ -22,6 +25,15 @@ class SeckillOrderRequest extends Request
                 'required',
                 'numeric',
                 function ($attribute, $value, $fail) {
+                    // 从 Redis 确认秒杀商品是否存在且库存充足
+                    $stock = app(SeckillService::class)->getCachedSkuStock($value);
+                    if ($stock === false) {
+                        $fail('秒杀商品不存在');
+                    }
+                    if ($stock <= 0) {
+                        $fail('库存不足');
+                    }
+
                     /**
                      * 检查商品是否存在
                      * @var ProductSku $productSku
@@ -55,8 +67,16 @@ class SeckillOrderRequest extends Request
                         $fail('秒杀已结束');
                     }
 
+                    // 确认用户登录态
+                    if (!Auth::check()) {
+                        throw new AuthenticationException('未登录');
+                    }
+                    if (!Auth::user()->hasVerifiedEmail()) {
+                        throw new AuthenticationException('邮箱未验证');
+                    }
+
                     // 每个秒杀商品, 用户只能参与一次
-                    $purchased = Order::query()->where('user_id', $this->user()->id)
+                    $purchased = Order::query()->where('user_id', Auth::id())
                         ->whereHas('items', function (Builder $query) use ($product) {
                             $query->where('product_id', $product->id);
                         })

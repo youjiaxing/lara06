@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Model;
  * Class OrderItem
  * @package App\Models
  *
+ * @property int             $amount
+ * @property float           $price
+ *
  * @property-read Product    $product
  * @property-read ProductSku $productSku
- * @property-read Order      $order
+ * @property-read Order      $order *
  */
 class OrderItem extends Model
 {

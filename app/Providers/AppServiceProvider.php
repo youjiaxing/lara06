@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Monolog\Logger;
 use Yansongda\Pay\Pay;
 
@@ -60,6 +62,14 @@ class AppServiceProvider extends ServiceProvider
             return $builder->build();
         });
         $this->app->alias('es', Client::class);
+
+        // 在本地环境开启 SQL 日志
+        if ($this->app->environment('local')) {
+            \DB::listen(function (\Illuminate\Database\Events\QueryExecuted $query) {
+                \Log::debug(Str::replaceArray('?', $query->bindings, $query->sql));
+            });
+
+        }
     }
 
     /**
