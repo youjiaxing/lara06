@@ -19,7 +19,7 @@ class SeckillService
      */
     protected function getSkuCacheKey($skuId)
     {
-        return "seckill_sku_" . $skuId;
+        return "seckill_sku_stock:" . $skuId;
     }
 
     /**
