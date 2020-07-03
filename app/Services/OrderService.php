@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\UserAddress;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class OrderService
 {
@@ -179,50 +180,17 @@ class OrderService
         // 提前扣库存
         $redisResult = app(SeckillService::class)->decrCachedSkuStock($sku->id, 1);
         if ($redisResult === -1) {
-            \Log::warning("秒杀商品sku($sku->id})扣减库存失败");
-            throw new InvalidRequestException("last check: stock not enough(库存不足)");
-        } else {
-            \Log::debug("秒杀商品sku($sku->id)库存(缓存): $redisResult");
+            $errmsg = "last check: stock not enough, 秒杀商品sku($sku->id})库存不足";
+            \Log::warning($errmsg);
+            throw new InvalidRequestException($errmsg);
         }
 
         \Log::info("预扣除库存成功, 剩余库存: $redisResult");
 
         try {
-            $order = DB::transaction(
+            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(2)->block(10)->then(
                 function () use ($user, $address, $remark, $sku, $amount) {
-                    // 更新地址使用时间
-                    $address->touchLastUsedAt();
-
-                    // 创建父订单
-                    $order = new Order(
-                        [
-                            'type' => Order::TYPE_SECKILL,
-                            'address' => $this->extractAddress($address),
-                            'total_amount' => $sku->price * $amount,
-                            'remark' => $remark,
-                        ]
-                    );
-                    $order->user()->associate($user);
-                    $order->save();
-
-                    // 创建子订单
-                    $orderItem = new OrderItem(
-                        [
-                            'amount' => $amount,
-                            'price' => $sku->price,
-                        ]
-                    );
-                    $orderItem->product()->associate($sku->product_id);
-                    $orderItem->productSku()->associate($sku);
-                    $orderItem->order()->associate($order);
-                    $orderItem->save();
-
-                    // 扣减库存
-                    if ($sku->decreaseStock($amount) <= 0) {
-                        throw new InvalidRequestException("库存不足");
-                    }
-
-                    return $order;
+                    return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
                 }
             );
         } catch (\Throwable $e) {
@@ -232,6 +200,61 @@ class OrderService
 
         // 定时关闭订单
         dispatch(new CloseOrder($order, config('app.seckill_order_ttl')));
+
+        return $order;
+    }
+
+    /**
+     * 实际创建秒杀订单
+     *
+     * @param User        $user
+     * @param UserAddress $address
+     * @param string      $remark
+     * @param ProductSku  $sku
+     * @param int         $amount
+     *
+     * @return mixed
+     * @throws \Throwable
+     */
+    protected function saveSeckillOrder(User $user, UserAddress $address, string $remark, ProductSku $sku, int $amount = 1)
+    {
+        $order = DB::transaction(
+            function () use ($user, $address, $remark, $sku, $amount) {
+                // 更新地址使用时间
+                $address->touchLastUsedAt();
+
+                // 创建父订单
+                $order = new Order(
+                    [
+                        'type' => Order::TYPE_SECKILL,
+                        'address' => $this->extractAddress($address),
+                        'total_amount' => $sku->price * $amount,
+                        'remark' => $remark,
+                    ]
+                );
+                $order->user()->associate($user);
+                $order->save();
+
+                // 创建子订单
+                $orderItem = new OrderItem(
+                    [
+                        'amount' => $amount,
+                        'price' => $sku->price,
+                    ]
+                );
+                $orderItem->product()->associate($sku->product_id);
+                $orderItem->productSku()->associate($sku);
+                $orderItem->order()->associate($order);
+                $orderItem->save();
+
+                // 扣减库存
+                if ($sku->decreaseStock($amount) <= 0) {
+                    throw new InvalidRequestException("库存不足");
+                }
+
+                return $order;
+            }
+        );
 
         return $order;
     }
