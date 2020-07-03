@@ -9,6 +9,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\ProductSku;
+use Illuminate\Redis\Connections\PhpRedisConnection;
 
 class SeckillService
 {
@@ -53,7 +54,7 @@ class SeckillService
     public function getCachedSkuStock($skuId)
     {
         $cacheKey = $this->getSkuCacheKey($skuId);
-        /* @var \Redis $redis */
+        /* @var PhpRedisConnection $redis */
         $redis = app('redis');
 
         $stock = (int)$redis->get($cacheKey);
@@ -71,7 +72,7 @@ class SeckillService
     public function decrCachedSkuStock($skuId, $decr = 1)
     {
         $cacheKey = $this->getSkuCacheKey($skuId);
-        /* @var \Redis $redis */
+        /* @var PhpRedisConnection $redis */
         $redis = app('redis');
 
         $lua = <<<EOF
@@ -82,12 +83,12 @@ local decr = ARGV[1]
 local stock = redis.call("get", key)
 
 if stock and stock >= decr then
-    return redis.call("decrby", decr)
+    return redis.call("decrby", key, decr)
 else
     return -1;
 end
 EOF;
-        return $redis->eval($lua, [$skuId, $decr], 1);
+        return $redis->eval($lua, 1, $cacheKey, $decr);
     }
 
     /**
@@ -100,7 +101,7 @@ EOF;
     public function incrCachedSkuStock($skuId, $incr = 1)
     {
         $cacheKey = $this->getSkuCacheKey($skuId);
-        /* @var \Redis $redis */
+        /* @var PhpRedisConnection $redis */
         $redis = app('redis');
 
         if ($redis->exists($cacheKey)) {
