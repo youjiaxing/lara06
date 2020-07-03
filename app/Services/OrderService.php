@@ -226,10 +226,8 @@ class OrderService
                 }
             );
         } catch (\Throwable $e) {
-            throw new InternalException("seckill transaction error:" . $e->getMessage(), "system busy");
-            // throw $e;
-        } finally {
             app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
+            throw new InternalException("seckill transaction error:" . $e->getMessage(), "system busy");
         }
 
         // 定时关闭订单
