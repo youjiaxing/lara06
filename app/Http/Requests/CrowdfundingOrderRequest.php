@@ -41,33 +41,33 @@ class CrowdfundingOrderRequest extends Request
                 function ($attribute, $value, $fail) {
                     /* @var ProductSku $productSku */
                     if (!$sku = ProductSku::query()->find($value)) {
-                        $fail("商品不存在");
+                        return $fail("商品不存在");
                     }
                     // 商品销售中
                     if (!$sku->product->on_sale) {
-                        $fail("商品未上架");
+                        return $fail("商品未上架");
                     }
                     // 库存足够
                     $amount = $this->input('amount', 0);
                     if ($sku->stock <= 0 || $sku->stock < $amount) {
-                        $fail("商品库存不足");
+                        return $fail("商品库存不足");
                     }
 
                     // 众筹商品类型
                     if (!$sku->product->isCrowdfundProduct()) {
-                        $fail("商品非众筹产品");
+                        return $fail("商品非众筹产品");
                     }
 
                     //众筹商品的特殊判断
                     /* @var CrowdfundingProduct $crowdfundingProduct */
                     if (!$crowdfundingProduct = CrowdfundingProduct::query()->where('product_id', $sku->product_id)->first()) {
-                        $fail("众筹信息不存在");
+                        return $fail("众筹信息不存在");
                     }
                     if ($crowdfundingProduct->status != CrowdfundingProduct::STATUS_FUNDING) {
-                        $fail("众筹已结束");
+                        return $fail("众筹已结束");
                     }
                     if ($crowdfundingProduct->end_at->isPast()) {
-                        $fail("众筹已结束");
+                        return $fail("众筹已结束");
                     }
                 },
             ],

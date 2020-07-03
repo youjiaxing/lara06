@@ -89,7 +89,7 @@ class OrdersController extends Controller
     public function seckillStore(SeckillOrderRequest $request, OrderService $orderService)
     {
         $user = $request->user();
-        $address = UserAddress::query()->findOrFail($request->input('address_id'));
+        $address = UserAddress::query()->where('user_id', $user->id)->findOrFail($request->input('address_id'));
         $remark = (string)$request->input('remark', '');
         $sku = ProductSku::query()->findOrFail($request->input('product_sku_id'));
         $order = $orderService->seckillStore($user, $address, $remark, $sku);
