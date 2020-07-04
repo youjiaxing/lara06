@@ -35,8 +35,12 @@ class CloseOrder implements ShouldQueue
         if ($this->order->paid_at) {
             return;
         }
+        $skuStockInc = [];
+
         // 通过事务执行 sql
         \DB::transaction(function() {
+            $skuStockInc = [];
+
             // 将订单的 closed 字段标记为 true，即关闭订单
             $this->order->update(['closed' => true]);
             // 循环遍历订单中的商品 SKU，将订单中的数量加回到 SKU 的库存中去
@@ -46,12 +50,16 @@ class CloseOrder implements ShouldQueue
 
                 // 秒杀商品需处理库存的缓存
                 if ($item->productSku->product->type === Product::TYPE_SECKILL) {
-                    app(SeckillService::class)->incrCachedSkuStock($item->productSku->id, $item->amount);
+                    $skuStockInc[$item->productSku->id] += $item->amount;
                 }
             }
             if ($this->order->couponCode) {
                 $this->order->couponCode->changeUsed(false);
             }
         });
+
+        foreach ($skuStockInc as $skuId => $incAmount) {
+            app(SeckillService::class)->incrCachedSkuStock($skuId, $incAmount);
+        }
     }
 }

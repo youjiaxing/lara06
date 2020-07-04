@@ -37,7 +37,7 @@ class SeckillProductsController extends BaseProductController
 
         $form->saved(function (Form $form) {
             /* @var Product $product */
-            $product = $form->model();
+            $product = $form->model()->refresh();   // 此处需重新加载, 保证是最新数据
             app(SeckillService::class)->cacheStock($product);
         });
     }
