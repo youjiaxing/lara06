@@ -182,7 +182,7 @@ class OrderService
         if ($redisResult === -1) {
             $errmsg = "last check: stock not enough, 秒杀商品sku($sku->id})库存不足";
             \Log::warning($errmsg);
-            throw new InvalidRequestException($errmsg);
+            throw new InvalidRequestException($errmsg,422);
         }
 
         \Log::info("预扣除库存成功, 剩余库存: $redisResult");
@@ -194,6 +194,7 @@ class OrderService
                 }
             );
         } catch (\Throwable $e) {
+            // 出错时还原库存
             app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
             throw new InternalException("seckill transaction error:" . $e->getMessage(), "system busy");
         }
