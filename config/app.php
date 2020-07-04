@@ -233,7 +233,7 @@ return [
     // 订单未付款超时时间
     'order_ttl' => 1800,
     // 秒杀订单未付款超时时间
-    'seckill_order_ttl' => 180,
+    'seckill_order_ttl' => 90,
     // 'order_ttl' => 18000,
 
     // Ngrok 分配的地址
