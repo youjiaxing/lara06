@@ -223,10 +223,10 @@ class OrderService
     {
         $order = DB::transaction(
             function () use ($user, $address, $remark, $sku, $amount) {
-// 扣减库存
-//                 if ($sku->decreaseStock($amount) <= 0) {
-//                     throw new InvalidRequestException("库存不足");
-//                 }
+                // 扣减库存, 注意该操作必须在插入 order_items 记录前, 否则会导致死锁.
+                if ($sku->decreaseStock($amount) <= 0) {
+                    throw new InvalidRequestException("库存不足");
+                }
 
                 // 更新地址使用时间
                 $address->touchLastUsedAt();
@@ -251,14 +251,14 @@ class OrderService
                     ]
                 );
                 $orderItem->product()->associate($sku->product_id);
-                $orderItem->productSku()->associate($sku);
+                $orderItem->productSku()->associate($sku);  // 由于外键的存在, 插入该记录时会对其外键对应表的行记录(即 product_skus 表中对应行)加一个共享锁, 因此若是减库存操作(对 product_skus 表对应行加一个写锁)在下面进行, 则非常大概率会导致死锁.
                 $orderItem->order()->associate($order);
                 $orderItem->save();
 
                 // 扣减库存
-                if ($sku->decreaseStock($amount) <= 0) {
-                    throw new InvalidRequestException("库存不足");
-                }
+                // if ($sku->decreaseStock($amount) <= 0) {
+                //     throw new InvalidRequestException("库存不足");
+                // }
 
                 return $order;
             }
