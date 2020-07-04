@@ -63,6 +63,10 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->alias('es', Client::class);
 
+        if ($this->app->isLocal()) {
+            $this->app->register(TelescopeServiceProvider::class);
+        }
+
         // 在本地环境开启 SQL 日志
         // if ($this->app->environment('local')) {
             \DB::listen(function (\Illuminate\Database\Events\QueryExecuted $query) {
