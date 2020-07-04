@@ -188,13 +188,13 @@ class OrderService
         \Log::info("预扣除库存成功, 剩余库存: $redisResult");
 
         try {
-            $order = $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
+            // $order = $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
 
-            // $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(20)->block(120)->then(
-            //     function () use ($user, $address, $remark, $sku, $amount) {
-            //         return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
-            //     }
-            // );
+            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(20)->block(120)->then(
+                function () use ($user, $address, $remark, $sku, $amount) {
+                    return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
+                }
+            );
         } catch (\Throwable $e) {
             // 出错时还原库存
             app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
