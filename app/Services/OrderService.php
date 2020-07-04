@@ -188,11 +188,13 @@ class OrderService
         \Log::info("预扣除库存成功, 剩余库存: $redisResult");
 
         try {
-            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(1)->block(10)->then(
-                function () use ($user, $address, $remark, $sku, $amount) {
-                    return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
-                }
-            );
+            $order = $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
+
+            // $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(1)->block(10)->then(
+            //     function () use ($user, $address, $remark, $sku, $amount) {
+            //         return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
+            //     }
+            // );
         } catch (\Throwable $e) {
             // 出错时还原库存
             app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
@@ -221,6 +223,11 @@ class OrderService
     {
         $order = DB::transaction(
             function () use ($user, $address, $remark, $sku, $amount) {
+                // 扣减库存
+                if ($sku->decreaseStock($amount) <= 0) {
+                    throw new InvalidRequestException("库存不足");
+                }
+
                 // 更新地址使用时间
                 $address->touchLastUsedAt();
 
@@ -247,11 +254,6 @@ class OrderService
                 $orderItem->productSku()->associate($sku);
                 $orderItem->order()->associate($order);
                 $orderItem->save();
-
-                // 扣减库存
-                if ($sku->decreaseStock($amount) <= 0) {
-                    throw new InvalidRequestException("库存不足");
-                }
 
                 return $order;
             }
