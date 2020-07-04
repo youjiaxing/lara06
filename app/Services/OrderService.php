@@ -223,7 +223,10 @@ class OrderService
     {
         $order = DB::transaction(
             function () use ($user, $address, $remark, $sku, $amount) {
-
+// 扣减库存
+                if ($sku->decreaseStock($amount) <= 0) {
+                    throw new InvalidRequestException("库存不足");
+                }
 
                 // 更新地址使用时间
                 $address->touchLastUsedAt();
@@ -252,10 +255,7 @@ class OrderService
                 $orderItem->order()->associate($order);
                 $orderItem->save();
 
-                // 扣减库存
-                if ($sku->decreaseStock($amount) <= 0) {
-                    throw new InvalidRequestException("库存不足");
-                }
+
 
                 return $order;
             }
