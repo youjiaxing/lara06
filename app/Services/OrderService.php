@@ -190,7 +190,7 @@ class OrderService
         try {
             // $order = $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
 
-            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(1)->block(120)->then(
+            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(15)->block(120)->then(
                 function () use ($user, $address, $remark, $sku, $amount) {
                     return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
                 }
