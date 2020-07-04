@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\UserAddress;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class OrderService
 {
