@@ -190,7 +190,7 @@ class OrderService
         try {
             // $order = $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
 
-            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(10)->block(120)->then(
+            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(1)->block(120)->then(
                 function () use ($user, $address, $remark, $sku, $amount) {
                     return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
                 }
@@ -252,7 +252,7 @@ class OrderService
                 $orderItem->order()->associate($order);
                 $orderItem->save();
 
-// 扣减库存
+                // 扣减库存
                 if ($sku->decreaseStock($amount) <= 0) {
                     throw new InvalidRequestException("库存不足");
                 }
