@@ -91,7 +91,8 @@ class SeckillOrderRequest extends Request
                         )
                         ->exists();
                     if ($purchased) {
-                        return $fail('秒杀商品每人仅限抢购一次');
+                        //TODO 压测先临时屏蔽
+                        // return $fail('秒杀商品每人仅限抢购一次');
                     }
                 }
             ],
