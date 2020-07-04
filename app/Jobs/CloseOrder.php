@@ -38,7 +38,7 @@ class CloseOrder implements ShouldQueue
         $skuStockInc = [];
 
         // 通过事务执行 sql
-        \DB::transaction(function() {
+        \DB::transaction(function() use (&$skuStockInc) {
             $skuStockInc = [];
 
             // 将订单的 closed 字段标记为 true，即关闭订单
