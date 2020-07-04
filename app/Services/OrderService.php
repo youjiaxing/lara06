@@ -14,7 +14,6 @@ use App\Models\User;
 use App\Models\UserAddress;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
 
 class OrderService
 {
@@ -182,19 +181,19 @@ class OrderService
         if ($redisResult === -1) {
             $errmsg = "last check: stock not enough, 秒杀商品sku($sku->id})库存不足";
             \Log::warning($errmsg);
-            throw new InvalidRequestException($errmsg,422);
+            throw new InvalidRequestException($errmsg, 422);
         }
 
         \Log::info("预扣除库存成功, 剩余库存: $redisResult");
 
         try {
-            // $order = $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
+            $order = $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
 
-            $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(1)->block(120)->then(
-                function () use ($user, $address, $remark, $sku, $amount) {
-                    return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
-                }
-            );
+            // $order = Redis::funnel("seckill_store_funnel:{$sku->id}_")->limit(1)->block(120)->then(
+            //     function () use ($user, $address, $remark, $sku, $amount) {
+            //         return $this->saveSeckillOrder($user, $address, $remark, $sku, $amount);
+            //     }
+            // );
         } catch (\Throwable $e) {
             // 出错时还原库存
             app(SeckillService::class)->incrCachedSkuStock($sku->id, 1);
@@ -223,7 +222,10 @@ class OrderService
     {
         $order = DB::transaction(
             function () use ($user, $address, $remark, $sku, $amount) {
-
+// 扣减库存
+                if ($sku->decreaseStock($amount) <= 0) {
+                    throw new InvalidRequestException("库存不足");
+                }
 
                 // 更新地址使用时间
                 $address->touchLastUsedAt();
@@ -253,9 +255,9 @@ class OrderService
                 $orderItem->save();
 
                 // 扣减库存
-                if ($sku->decreaseStock($amount) <= 0) {
-                    throw new InvalidRequestException("库存不足");
-                }
+                // if ($sku->decreaseStock($amount) <= 0) {
+                //     throw new InvalidRequestException("库存不足");
+                // }
 
                 return $order;
             }
