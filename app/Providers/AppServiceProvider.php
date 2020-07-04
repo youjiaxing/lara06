@@ -64,11 +64,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->alias('es', Client::class);
 
         // 在本地环境开启 SQL 日志
-        // if ($this->app->environment('local')) {
+        if ($this->app->environment('local')) {
             \DB::listen(function (\Illuminate\Database\Events\QueryExecuted $query) {
                 \Log::debug(Str::replaceArray('?', $query->bindings, $query->sql));
             });
-        // }
+        }
     }
 
     /**
