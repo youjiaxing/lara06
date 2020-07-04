@@ -50,7 +50,7 @@ class CloseOrder implements ShouldQueue
 
                 // 秒杀商品需处理库存的缓存
                 if ($item->productSku->product->type === Product::TYPE_SECKILL) {
-                    $skuStockInc[$item->productSku->id] += $item->amount;
+                    $skuStockInc[$item->productSku->id] = $item->amount + ($skuStockInc[$item->productSku->id] ?? 0);
                 }
             }
             if ($this->order->couponCode) {
