@@ -78,4 +78,4 @@ Route::post('installments/alipay/notify', 'InstallmentsController@alipayNotify')
 Route::get('products/{product}', 'ProductsController@show')->name('products.show');
 
 // 秒杀下单 - 性能优化, 不提前验证用户是否登录
-Route::post('seckill_orders', 'OrdersController@seckillStore')->name('seckill_orders.store');
+Route::post('seckill_orders', 'OrdersController@seckillStore')->name('seckill_orders.store')->middleware('random_drop:80');

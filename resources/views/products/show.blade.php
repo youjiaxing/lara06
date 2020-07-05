@@ -400,6 +400,9 @@
                     msg = _.flatten(_.values(e.response.data.errors)).join("\n");
                     console.log(e.response.data.errors, msg);
                 }
+                else if (resp.data.msg) {
+                    msg = resp.data.msg;
+                }
                 // 其他错误
                 else if (resp.data.message) {
                     msg = resp.data.message;
